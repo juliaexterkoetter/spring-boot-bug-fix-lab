@@ -4,13 +4,13 @@ A small REST API for managing customers, products, and orders, used to demonstra
 
 ## Current debugging exercise
 
-Three debugging scenarios are documented; stock validation is now fixed, and the other two defects remain:
+Three debugging scenarios are documented; stock validation and total recalculation are fixed; missing-order handling remains intentionally broken:
 
 1. [Insufficient stock](docs/bugs/01-insufficient-stock.md): fixed: order creation rejects quantities above available stock with HTTP 409.
-2. [Order total recalculation](docs/bugs/02-order-total-recalculation.md): replacing items accumulates the previous total.
+2. [Order total recalculation](docs/bugs/02-order-total-recalculation.md): fixed: replacing items resets and rebuilds the total from the replacement items.
 3. [Missing order error handling](docs/bugs/03-missing-order-error-handling.md): retrieving an unknown order returns 500 instead of 404.
 
-The suite currently has **26 tests: 22 passing and 4 failing**. Stock regression and boundary tests pass; the total and missing-order tests still fail. Existing assertions are preserved; valid-order fixtures now provide sufficient stock. See [regression test results](docs/regression-tests.md). A normal `mvn package` fails at the test phase. To run the intentionally faulty demonstration, use `mvn -DskipTests package` and then the executable JAR. This is not a successful test verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`.
+The suite currently has **26 tests: 23 passing, 2 assertion failures, and 1 error**. Stock and total tests pass; all remaining unsuccessful tests concern missing-order handling. Existing assertions are preserved; valid-order fixtures now provide sufficient stock. See [regression test results](docs/regression-tests.md). A normal `mvn package` fails at the test phase. To run the intentionally faulty demonstration, use `mvn -DskipTests package` and then the executable JAR. This is not a successful test verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`.
 
 ## Technologies
 
@@ -58,7 +58,7 @@ mvn test
 mvn package
 ```
 
-Both commands run the JUnit 5 suite and currently fail because of the intentional defects described above. The two original failing tests are `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences` and `OrderServiceTest.reportsMissingOrder`. The total and missing-order tests in `OrderRegressionTest` also fail intentionally and are described in the regression report. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
+Both commands run the JUnit 5 suite and currently fail because of the intentional defects described above. The remaining assertion failures are `OrderServiceTest.reportsMissingOrder` and `OrderRegressionTest.returnsNotFoundWhenOrderDoesNotExist`. `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences` now passes its total assertions but errors on its later GET after deleting the order. All three results are caused by the intentionally open missing-order bug and are described in the regression report. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
 
 ## Main endpoints
 
@@ -107,7 +107,7 @@ An order response includes `id`, `customerId`, `createdAt` (UTC), `items`, and `
 - Product stock accepts non-negative integers. Omitted or null stock defaults to zero on creation and preserves the current value on update for compatibility with existing requests. Order creation rejects quantities above stock with HTTP 409, including cumulative quantities across repeated product lines. Order updates retain their existing behavior. Inventory reservation and depletion are not implemented.
 - Product prices must be at least `0.01`, with at most 10 integer digits and 2 decimal places.
 - Orders require an existing customer and 1–100 non-null items. Each item requires an existing product and an integer quantity from 1 to 1,000,000.
-- Monetary values use `BigDecimal`. The server calculates subtotals and initial totals from product prices; clients cannot submit prices or totals on orders. Updated order totals are intentionally incorrect (bug 2).
+- Monetary values use `BigDecimal`. The server calculates subtotals and initial totals from product prices; clients cannot submit prices or totals on orders. Replacing items resets the previous total and rebuilds it from the current items using their stored unit prices.
 - Each order item stores the product price at the time it is added. Later product price changes do not alter existing orders.
 - `PUT` fully replaces the resource. Replacing an order replaces its items and uses current product prices, while retaining its creation time. Repeated product IDs are allowed as separate line items.
 - Order writes are transactional. An invalid reference rolls back the entire operation.

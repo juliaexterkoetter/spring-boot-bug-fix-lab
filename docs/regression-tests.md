@@ -1,6 +1,33 @@
 # Regression tests for the debugging lab
 
-## Latest result: insufficient-stock fix
+## Latest result: order total recalculation fix
+
+Validated on October 5, 2026. Bugs 1 and 2 are fixed; only the missing-order bug remains open. No test source, fixture, or assertion changed in this step.
+
+Root cause: clearing items left the stored total intact. `Order.clearItems()` now resets that total to 0.00; the existing item-addition calculation rebuilds it from the replacement items without duplicated calculation logic. Stored item prices remain unchanged by product edits, and order replacement still uses current prices.
+
+`mvn -Dtest=OrderRegressionTest#recalculatesOrderTotalWhenItemQuantityChanges test` failed before the fix (PUT and GET totals 70.00 instead of 50.00), then passed afterward: 1 test, 0 failures/errors/skips.
+
+Actual results from both `mvn test` and `mvn package`:
+
+| Suite | Executed | Passed | Assertion failures | Errors | Skipped |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `ApiIntegrationTest` | 17 | 16 | 0 | 1 | 0 |
+| `OrderServiceTest` | 4 | 3 | 1 | 0 | 0 |
+| `OrderRegressionTest` | 5 | 4 | 1 | 0 | 0 |
+| **Total** | **26** | **23** | **2** | **1** | **0** |
+
+Both commands exited 1 with BUILD FAILURE. The only remaining cause is bug 3:
+
+- `OrderServiceTest.reportsMissingOrder`: expected ResourceNotFoundException, actual NoSuchElementException.
+- `OrderRegressionTest.returnsNotFoundWhenOrderDoesNotExist`: expected HTTP 404, actual HTTP 500.
+- `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences`: the total assertions now pass, so it reaches GET after deleting the order; the same missing-order exception escapes MockMvc as a ServletException. This is an exposed later check of the existing bug, not a new unrelated defect.
+
+The stock tests, total regression, price snapshot unit test, and transactional rollback test pass. HTTP verification used `mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8082`, without a skipped-test package. It confirmed 20.00 to 50.00, repeated PUT remaining 50.00, a replacement with multiple items totaling 15.00, and preserved price snapshot/replacement behavior. The missing-order endpoint still returned 500. See [the total fix report](bugs/02-order-total-recalculation.md#fix-evidence) for captured responses.
+
+No screenshots were captured. The corrected total and passing targeted test are pending genuine capture; final all-green suite evidence is still unavailable.
+
+## Historical result: insufficient-stock fix
 
 Validated on October 5, 2026. Only bug 1 has been corrected; bugs 2 and 3 remain intentionally unfixed.
 

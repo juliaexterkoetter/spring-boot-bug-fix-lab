@@ -1,5 +1,91 @@
 # Bug 2: Order total recalculation
 
+**Status: fixed on October 5, 2026.** The missing-order error-handling bug remains intentionally open.
+
+## Fix evidence
+
+### Root cause and minimal correction
+
+`Order.clearItems()` removed old items but retained their accumulated total. `OrderService.update` then added replacement items through `addItem`, adding their subtotals to that stale value. Two units at 10.00 followed by five units produced 20.00 + 50.00 = 70.00.
+
+`clearItems()` now resets `total` to 0.00 when clearing the collection. The existing `addItem` and `OrderItem.getSubtotal` calculation is reused to build the replacement total from current items. No calculation was duplicated, no service or exception mapping changed, and no test source or assertion was modified.
+
+The existing price contract is preserved: each item stores its unit price; changing a product price alone does not change existing orders. A PUT replaces items and uses the current product prices. No stock or missing-order behavior was changed.
+
+### Before and after tests
+
+Associated test: `OrderRegressionTest.recalculatesOrderTotalWhenItemQuantityChanges`.
+
+```bash
+mvn -Dtest=OrderRegressionTest#recalculatesOrderTotalWhenItemQuantityChanges test
+```
+
+Before the fix: 1 failure, because both PUT and GET totals were 70.00 instead of 50.00. After the fix: 1 test passed, 0 failures/errors/skips, with the exact same assertions.
+
+Both `mvn test` and `mvn package` executed 26 tests: **23 passed, 2 assertion failures, 1 error, 0 skipped**. Both commands exited 1 and reported BUILD FAILURE solely because of the open missing-order bug:
+
+- `OrderServiceTest.reportsMissingOrder`: wrong exception type.
+- `OrderRegressionTest.returnsNotFoundWhenOrderDoesNotExist`: HTTP 500 instead of 404.
+- `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences`: its total and price assertions now pass, exposing the later GET-after-delete request that throws `NoSuchElementException`. MockMvc reports this as an error rather than an assertion failure.
+
+Compilation succeeded, but the full build did not pass. No `-DskipTests` command was used in this task. For HTTP verification, the application was started from current compiled sources with:
+
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8082
+```
+
+This development startup is not evidence of a successful final build.
+
+### Actual HTTP verification
+
+Recorded on October 5, 2026 on port 8082. A fresh customer and product were created; the product had price 10.00 and stock 100. The POST for two units returned HTTP 201 and total 20.00. The following request returned HTTP 200:
+
+```bash
+curl -i -X PUT http://localhost:8082/api/orders/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"customerId":1,"items":[{"productId":1,"quantity":5}]}'
+```
+
+Captured response (formatted):
+
+```json
+{
+  "id": 1,
+  "customerId": 1,
+  "createdAt": "2026-10-05T20:52:46.693260Z",
+  "items": [
+    {
+      "id": 2,
+      "productId": 1,
+      "quantity": 5,
+      "unitPrice": 10.0,
+      "subtotal": 50.0
+    }
+  ],
+  "total": 50.0
+}
+```
+
+A separate GET returned the same total 50.00. Additional real HTTP checks confirmed:
+
+| Scenario | Actual result |
+| --- | --- |
+| Repeat the same five-unit PUT | Total remains 50.00; no accumulation. |
+| Replace with one unit at 10.00 and two units of another product at 2.50 | PUT and GET total 15.00. |
+| Change the first product price to 12.00 without changing the order | Existing order remains 15.00 with its stored unit prices. |
+| Replace that order with five units of the first product | PUT and GET total 60.00, using current price 12.00. |
+| Request 101 units against stock 100 | HTTP 409; the stock fix is preserved. |
+| GET nonexistent order 999999 | HTTP 500; bug 3 remains open. |
+
+### Pending screenshots
+
+No screenshots were captured. Capture the passing targeted regression and real 20.00-to-50.00 PUT/GET result later as `12-order-total-corrected.png`; include a repeated update to show the absence of accumulation. Capture the pre-fix `03-order-total-bug.png` only from a genuine rerun of a pre-fix commit. The full-suite all-green screenshot remains blocked by bug 3.
+
+## Historical evidence before the fix
+
+The following sections describe the original defect. Reproduce them using commit `fa7589ac473499f50e385e4055f1039c5736b3ef` or an earlier bug-introduction revision, not the corrected current code.
+
+
 ## Affected endpoint
 
 `PUT /api/orders/{id}`; the incorrect total is also visible through subsequent order GET requests.

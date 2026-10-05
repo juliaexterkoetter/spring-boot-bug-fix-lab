@@ -37,7 +37,10 @@ public class Order {
     public void setCustomer(Customer customer) { this.customer = customer; }
     public Instant getCreatedAt() { return createdAt; }
     public List<OrderItem> getItems() { return Collections.unmodifiableList(items); }
-    public void clearItems() { items.clear(); }
+    public void clearItems() {
+        items.clear();
+        total = new BigDecimal("0.00");
+    }
     public void addItem(Product product, int quantity) {
         OrderItem item = new OrderItem(this, product, quantity);
         items.add(item);
