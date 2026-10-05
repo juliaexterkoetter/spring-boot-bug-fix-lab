@@ -133,3 +133,7 @@ src/test/java/com/example/bugfixlab/
 ## Scope and limitations
 
 The H2 database is in memory: all data is lost when the application stops. Schema creation is automatic for this development baseline. There is no authentication, frontend, Docker configuration, payment processing, inventory reservation, or order status workflow. List endpoints are unpaginated and intended for small portfolio datasets. Production persistence and deployment hardening are outside this initial version's scope.
+
+## Portfolio Evidence
+
+See the [portfolio evidence register](docs/portfolio/portfolio-evidence.md) for verified milestones, regression results, and the screenshot capture plan.
