@@ -66,7 +66,7 @@ class ApiIntegrationTest {
     @Test
     void orderCrudPreservesPricesAndProtectsReferences() throws Exception {
         long customer = create("customers", "{\"name\":\"Alex\",\"email\":\"alex@example.com\"}");
-        long product = create("products", "{\"name\":\"Keyboard\",\"price\":19.99}");
+        long product = create("products", "{\"name\":\"Keyboard\",\"price\":19.99,\"stock\":100}");
         long order = create("orders", orderBody(customer, product, 2));
         mvc.perform(get("/api/orders")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
         mvc.perform(delete("/api/customers/{id}", customer)).andExpect(status().isConflict());
@@ -88,7 +88,7 @@ class ApiIntegrationTest {
     @Test
     void rollsBackEntireOrderUpdateWhenAnyProductIsMissing() throws Exception {
         long customer = create("customers", "{\"name\":\"Alex\",\"email\":\"alex@example.com\"}");
-        long product = create("products", "{\"name\":\"Keyboard\",\"price\":19.99}");
+        long product = create("products", "{\"name\":\"Keyboard\",\"price\":19.99,\"stock\":100}");
         long order = create("orders", orderBody(customer, product, 2));
         String invalidUpdate = "{\"customerId\":%d,\"items\":[{\"productId\":%d,\"quantity\":5},{\"productId\":999999,\"quantity\":1}]}"
                 .formatted(customer, product);

@@ -56,6 +56,35 @@ class OrderRegressionTest {
     }
 
     @Test
+    @DisplayName("Stock validation: allow an order requesting exactly the available stock")
+    void acceptsOrderWhenQuantityEqualsAvailableStock() {
+        Customer customer = createCustomer();
+        Product product = createProductWithStock(2);
+
+        var response = http.postForEntity("/api/orders", orderRequest(customer, product, 2), OrderResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().total()).isEqualByComparingTo("20.00");
+        assertThat(orders.count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Stock validation: sum repeated product lines before accepting an order")
+    void rejectsOrderWhenRepeatedProductLinesExceedAvailableStock() {
+        Customer customer = createCustomer();
+        Product product = createProductWithStock(2);
+        OrderRequest request = new OrderRequest(customer.getId(), List.of(
+                new OrderItemRequest(product.getId(), 1), new OrderItemRequest(product.getId(), 2)));
+
+        var response = http.postForEntity("/api/orders", request, String.class);
+
+        assertAll("Repeated lines must not bypass stock validation or partially persist the order",
+                () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT),
+                () -> assertThat(orders.count()).isZero());
+    }
+
+    @Test
     @DisplayName("Bug 2: replacing quantity recalculates and persists the order total")
     void recalculatesOrderTotalWhenItemQuantityChanges() {
         Customer customer = createCustomer();

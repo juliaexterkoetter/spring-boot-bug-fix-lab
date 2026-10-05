@@ -11,7 +11,7 @@ All entries below are **pending**.
 | Suggested filename | What must be visible | Why it is useful | Upwork service supported | When it should be captured |
 | --- | --- | --- | --- | --- |
 | `01-baseline-tests-passing.png` | Real terminal run of `mvn test` on baseline commit `e04266c`, with 21 tests, zero failures/errors/skips, and BUILD SUCCESS; show the commit identity. | Establishes the clean starting point before intentional defects. | Java/Spring Boot REST API development and automated testing. | During a genuine rerun of the baseline in an isolated checkout of the same repository. Label it as a later rerun; do not present current failing tests as the baseline. |
-| `02-insufficient-stock-bug.png` | Product stock 2, order POST quantity 5, HTTP 201, and the persisted order response. | Demonstrates the exact business-rule violation with input and outcome. | Spring Boot business-rule debugging. | Before fixing bug 1, following its documented HTTP reproduction. |
+| `02-insufficient-stock-bug.png` | Product stock 2, order POST quantity 5, HTTP 201, and the persisted order response. | Demonstrates the exact business-rule violation with input and outcome. | Spring Boot business-rule debugging. | From a genuine rerun of pre-fix commit `071ae40`, following its documented HTTP reproduction; the current version rejects this request. |
 | `03-order-total-bug.png` | Initial quantity 2 and total 20.00; PUT quantity 5 at price 10.00; subtotal 50.00, incorrect total 70.00, and follow-up GET. | Shows the discrepancy and proves it survives persistence. | Java calculation and persistence bug diagnosis. | Before fixing bug 2, with sufficient stock and unchanged product price. |
 | `04-missing-order-500.png` | GET of a confirmed nonexistent order, request URL, HTTP 500, and error body. | Shows incorrect HTTP error handling from a real server. | REST API troubleshooting and exception handling. | Before fixing bug 3; use the real HTTP endpoint, not only a unit exception trace. |
 | `05-regression-tests-failing.png` | Actual full `mvn test` run, all three regression test names and expected/actual mismatches, plus summary: 24 executed, 5 failures, 0 errors/skips, BUILD FAILURE. | Links the documented bugs to automated tests and exposes the two pre-existing failures honestly. | JUnit 5 integration testing and regression test development. | Before fixes, using regression commit `09537ba` or a documentation-only descendant. Use readable additional captures if one screen cannot fit the details; retain this filename for the summary. |
@@ -25,7 +25,8 @@ All entries below are **pending**.
 ## Capture readiness
 
 - **Existing evidence, capture still pending:** 01–05. The baseline needs a rerun at its historical commit; the three broken HTTP scenarios and failing regression suite are available at the current development stage.
-- **Future work required:** 06, 09, and 10 need fixes; 07 needs JaCoCo; 08 needs Swagger/OpenAPI; 11 needs Docker.
+- **Stock fix verified, capture pending:** 09; no screenshots were taken during the fix.
+- **Future work required:** 06 and 10 need fixes; 07 needs JaCoCo; 08 needs Swagger/OpenAPI; 11 needs Docker.
 - **Captured in this documentation step:** none. No PNG files were created.
 
 ## Evidence sources
@@ -34,6 +35,6 @@ All entries below are **pending**.
 - [Insufficient stock report](../bugs/01-insufficient-stock.md).
 - [Order total report](../bugs/02-order-total-recalculation.md).
 - [Missing order report](../bugs/03-missing-order-error-handling.md).
-- [Regression test report](../regression-tests.md): latest recorded suite has 24 tests, 19 passes, and 5 failures. Do not caption the latest suite as having only two failures.
+- [Regression test report](../regression-tests.md): the regression-introduction suite had 24 tests, 19 passes, and 5 failures; after the stock fix it has 26 tests, 22 passes, and 4 failures. Do not caption the latest suite as having only two failures.
 
 After each genuine capture, add the image link and provenance to the evidence register and update that entry's status. Keep unimplemented capabilities marked pending.

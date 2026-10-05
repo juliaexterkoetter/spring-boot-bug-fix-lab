@@ -29,8 +29,12 @@ class OrderServiceTest {
     @Test
     void calculatesTotalsUsingProductPrices() {
         when(customers.requireById(1L)).thenReturn(new Customer("Alex", "alex@example.com"));
-        when(products.requireById(2L)).thenReturn(new Product("Keyboard", new BigDecimal("19.99")));
-        when(products.requireById(3L)).thenReturn(new Product("Cable", new BigDecimal("0.10")));
+        Product keyboard = new Product("Keyboard", new BigDecimal("19.99"));
+        keyboard.setStock(3);
+        Product cable = new Product("Cable", new BigDecimal("0.10"));
+        cable.setStock(2);
+        when(products.requireById(2L)).thenReturn(keyboard);
+        when(products.requireById(3L)).thenReturn(cable);
         when(repository.saveAndFlush(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         var response = service.create(new OrderRequest(1L,

@@ -2,12 +2,16 @@ package com.example.bugfixlab.service;
 
 import com.example.bugfixlab.dto.*;
 import com.example.bugfixlab.entity.Order;
+import com.example.bugfixlab.entity.Product;
+import com.example.bugfixlab.exception.ConflictException;
 import com.example.bugfixlab.exception.ResourceNotFoundException;
 import com.example.bugfixlab.repository.OrderRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -37,7 +41,15 @@ public class OrderService {
     @Transactional
     public OrderResponse create(OrderRequest request) {
         Order order = new Order(customers.requireById(request.customerId()));
-        replaceItems(order, request);
+        Map<Long, Integer> requestedQuantities = new HashMap<>();
+        for (OrderItemRequest item : request.items()) {
+            Product product = products.requireById(item.productId());
+            int requestedQuantity = requestedQuantities.merge(item.productId(), item.quantity(), Integer::sum);
+            if (requestedQuantity > product.getStock()) {
+                throw new ConflictException("Insufficient stock for product: " + item.productId());
+            }
+            order.addItem(product, item.quantity());
+        }
         return toResponse(repository.saveAndFlush(order));
     }
 

@@ -1,5 +1,40 @@
 # Regression tests for the debugging lab
 
+## Latest result: insufficient-stock fix
+
+Validated on October 5, 2026. Only bug 1 has been corrected; bugs 2 and 3 remain intentionally unfixed.
+
+Root cause: order creation never compared requested quantities with product stock. `OrderService.create` now checks cumulative quantities per product before saving and raises the existing `ConflictException`, mapped to HTTP 409. No stock reservation/decrement or order-update validation was added.
+
+The targeted command `mvn -Dtest=OrderRegressionTest#rejectsOrderWhenQuantityExceedsAvailableStock test` first failed (201 instead of 409; one order instead of zero), then passed after the fix with its assertions unchanged. Two additional stock boundary tests verify that exact stock is accepted and repeated product lines cannot bypass the limit. Both pass.
+
+| Suite | Executed | Passed | Failed | Errors | Skipped |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `ApiIntegrationTest` | 17 | 16 | 1 | 0 | 0 |
+| `OrderServiceTest` | 4 | 3 | 1 | 0 | 0 |
+| `OrderRegressionTest` | 5 | 3 | 2 | 0 | 0 |
+| **Total** | **26** | **22** | **4** | **0** | **0** |
+
+`mvn test` and `mvn package` both exited with code 1 because the same four failures remain:
+
+- `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences`: 129.95 instead of 89.97 (bug 2).
+- `OrderRegressionTest.recalculatesOrderTotalWhenItemQuantityChanges`: PUT and GET return 70.00 instead of 50.00 (bug 2).
+- `OrderServiceTest.reportsMissingOrder`: NoSuchElementException instead of ResourceNotFoundException (bug 3).
+- `OrderRegressionTest.returnsNotFoundWhenOrderDoesNotExist`: HTTP 500 instead of 404 (bug 3).
+
+No unrelated failures were introduced. In `ApiIntegrationTest`, the two order fixtures now set stock 100; in `OrderServiceTest`, the calculation fixture sets keyboard stock 3 and cable stock 2. Previously these valid-order scenarios implicitly used stock zero. Only their setup changed: all existing assertions and test methods are retained, and the other defects still fail at their original assertions.
+
+Added tests in `src/test/java/com/example/bugfixlab/regression/OrderRegressionTest.java`:
+
+- `acceptsOrderWhenQuantityEqualsAvailableStock`: stock 2 / quantity 2 returns 201 and persists one order.
+- `rejectsOrderWhenRepeatedProductLinesExceedAvailableStock`: stock 2 / quantities 1 + 2 returns 409 and persists no order.
+
+For live verification only, `mvn -DskipTests package` produced a JAR. Real HTTP on port 8081 confirmed 409 and an empty order list after rejection; exact-stock creation succeeded. The total and missing-order bugs were reproduced again. See [the stock fix report](bugs/01-insufficient-stock.md#fix-evidence). No screenshots were captured; stock rejection and the passing targeted test remain pending capture.
+
+## Historical regression introduction
+
+The following record applies to commit `09537ba423bfebced365ce38f853276fefb9fcf3`, before the stock fix. Its 24-test counts and all-three-failing statements are historical.
+
 These tests protect the correct behavior of the three documented bugs. They intentionally fail against the current production code. No production code, existing test, or Maven test configuration was changed, and none of the new tests accepts the faulty behavior as correct.
 
 ## Test design and isolation

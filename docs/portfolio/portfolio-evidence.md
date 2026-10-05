@@ -1,8 +1,8 @@
 # Portfolio evidence
 
-This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. All three intentional defects remain in the application.
+This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. The stock defect is now fixed for order creation; the total and missing-order defects remain.
 
-Last documentation review: October 5, 2026. This documentation-only step did not rerun the application or tests; the results below reference the recorded executions and their commits.
+Last documentation review: October 5, 2026. The latest stock-fix step reran the targeted test, full suite, packaging, and real HTTP verification. Historical results retain their milestone context.
 
 When adding evidence, record the date, source commit, command or HTTP request, expected and actual result, and a link to the report or genuine screenshot. Preserve historical results instead of replacing them with later results. A planned screenshot is not evidence of execution.
 
@@ -62,6 +62,10 @@ To reproduce the intentionally broken application, its JAR was packaged with tes
 
 ## 5. Regression test evidence
 
+Latest stock-fix run: **26 tests, 22 passes, 4 failures, 0 errors/skips**. The unchanged stock regression now passes, together with two new stock boundary tests. Only failures for bugs 2 and 3 remain. See the latest section of the [regression report](../regression-tests.md).
+
+### Historical regression introduction
+
 Regression-test commit: `09537ba423bfebced365ce38f853276fefb9fcf3`.
 
 Three independent integration tests use a real HTTP server on a random port and a dedicated H2 database, with fresh fixtures for each test and no mocks.
@@ -72,19 +76,23 @@ Three independent integration tests use a real HTTP server on a random port and 
 | `recalculatesOrderTotalWhenItemQuantityChanges` | Expected 50.00 in both PUT and follow-up GET responses; both returned 70.00. |
 | `returnsNotFoundWhenOrderDoesNotExist` | Expected HTTP 404; received HTTP 500. |
 
-Latest recorded `mvn test` result: **24 executed, 19 passed, 5 failed, 0 errors, 0 skipped; BUILD FAILURE**. The five failures are the three new regression tests plus the two original failures. No unrelated failures were introduced. Existing tests and production logic were unchanged during that step.
+At regression introduction, `mvn test` reported **24 executed, 19 passed, 5 failed, 0 errors, 0 skipped; BUILD FAILURE**. The five failures are the three new regression tests plus the two original failures. No unrelated failures were introduced. Existing tests and production logic were unchanged during that step.
 
 Sources: [regression report](../regression-tests.md) and [regression test source](../../src/test/java/com/example/bugfixlab/regression/OrderRegressionTest.java). The 19-pass/2-failure count belongs to the earlier 21-test milestone, not the current 24-test suite.
 
 ## 6. Bug fixes
 
-**Pending.** None of the three bugs has been fixed. There is no fix commit or successful post-fix reproduction to present.
+**Bug 1 fixed; bugs 2 and 3 pending.** On October 5, 2026, the stock regression failed before correction and passed afterward without assertion changes. Root cause: order creation ignored stock. The minimal service change validates cumulative requested quantity per product before persistence and reuses the existing HTTP 409 exception mapping.
+
+Real HTTP on the newly packaged application (port 8081) returned 409 for stock 2 / quantity 5; an immediate GET returned an empty order list. Repeated product lines totaling 3 were rejected against stock 2, while quantity 2 succeeded. Bugs 2 and 3 were reconfirmed through HTTP: total 70.00 instead of 50.00 and missing-order HTTP 500.
+
+Both `mvn test` and `mvn package` failed only on the four remaining bug-2/bug-3 assertions. `mvn -DskipTests package` succeeded solely for the runnable verification artifact. This is not a green full build. Source revision: the dedicated stock-fix commit containing this entry, titled `fix: reject order creation when requested quantity exceeds stock`. See [root cause, correction, and before/after evidence](../bugs/01-insufficient-stock.md#fix-evidence).
 
 For each future fix, add the diagnosis, minimal code change, commit, passing regression result, and real before/after HTTP evidence. Do not mark a bug fixed based only on a planned change.
 
 ## 7. Final test results
 
-**Pending.** No final, all-green result exists for the expanded regression suite. The latest recorded result remains 19 passes and 5 failures out of 24 tests.
+**Pending.** No final, all-green result exists for the expanded regression suite. The latest recorded result remains 22 passes and 4 failures out of 26 tests.
 
 After the bugs are fixed, record the actual full-suite counts, Maven build result, source commit, and verification date. The historical 21-test baseline must not be presented as the post-fix result.
 
@@ -112,7 +120,7 @@ When implemented in a later task, record the image/build command, startup logs, 
 
 The current environment has no configured X11 or Wayland display and exposes no screen-capture tool for the terminal or running API. Although an ImageMagick capture binary is installed, there is no graphical session to capture. No artificial terminal image, rendered log image, generated screenshot, or placeholder PNG was created.
 
-The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 already have recorded results but need genuine captures; scenarios 06–11 depend on future fixes or tooling.
+The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06–08 and 10–11 still depend on future fixes or tooling. No screenshot was captured during the stock-fix task.
 
 When a real image is added, record its filename, capture date, source commit, command/request, and a factual caption here. If the baseline is rerun later, label the image as a rerun of the baseline commit, not an original historical capture.
 
@@ -128,6 +136,6 @@ Services this evidence can support:
 
 Suggested factual project description based on current evidence:
 
-> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. The current 24-test suite intentionally has five failures; fixes are a later stage of this portfolio exercise.
+> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed the stock-validation defect and verified rejection without persistence. The current 26-test suite has four failures from the two remaining controlled defects.
 
-Claims about completed bug fixes, a final all-green suite, coverage percentages, Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.
+Only the stock fix is currently verified. Claims about completing all bug fixes, a final all-green suite, coverage percentages, Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.
