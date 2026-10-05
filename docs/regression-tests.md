@@ -1,6 +1,8 @@
 # Regression tests for the debugging lab
 
-## Final result: missing-order handling fixed
+Current suite: **29 passing tests**, including all five order regressions. See [testing and coverage](testing.md) and the [final audit](portfolio/final-audit.md). The results below retain their original milestone counts.
+
+## Historical bug-fix milestone: missing-order handling fixed
 
 Validated on October 5, 2026. All three documented bugs are fixed. Production changed only in `OrderService.findById`, which now calls the existing `requireById` helper instead of throwing an unmapped `NoSuchElementException`. The global `ResourceNotFoundException` handler now produces 404 without duplicate controller logic. No test source or assertion changed.
 

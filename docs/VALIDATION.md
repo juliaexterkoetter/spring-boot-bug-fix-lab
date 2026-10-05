@@ -1,6 +1,8 @@
 # Validation history
 
-## Current debugging version
+Current validation: **29 passing tests**; see the [final audit](portfolio/final-audit.md). The following results are historical.
+
+## Historical controlled-bug milestone
 
 Validated on October 5, 2026. All original test files remain unchanged.
 

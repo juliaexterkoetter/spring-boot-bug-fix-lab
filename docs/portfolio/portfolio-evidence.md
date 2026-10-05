@@ -2,9 +2,25 @@
 
 This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. All three documented defects are fixed and verified.
 
+Latest audit: [final quality and presentation audit](final-audit.md) verified 29 passing tests locally and inside a fresh Docker build, unchanged coverage, 13 direct HTTP checks, 11 Swagger requests, and healthy non-root container execution. Compose now publishes on loopback only. The project is ready for genuine capture; all 18 planned screenshots remain pending.
+
 Last documentation review: October 5, 2026. The latest Docker step reran local `mvn clean verify` and the same lifecycle inside the build image: 29 tests passed in each. The running container passed 13 direct HTTP checks and 11 Swagger UI requests. Application sources, tests, Maven, Swagger, and JaCoCo configuration were unchanged. Historical results retain their milestone context.
 
 When adding evidence, record the date, source commit, command or HTTP request, expected and actual result, and a link to the report or genuine screenshot. Preserve historical results instead of replacing them with later results. A planned screenshot is not evidence of execution.
+
+## Milestone map
+
+| Milestone | Commit | Test result at that revision |
+| --- | --- | --- |
+| Functional baseline | `e04266c` | 21 passed |
+| Controlled bugs | `071ae40` | 19 passed, 2 failed |
+| Failing regressions | `09537ba` | 19 passed, 5 failed |
+| Stock fix | `fa7589a` | 22 passed, 4 failed |
+| Total fix | `7dc887d` | 23 passed, 2 failures, 1 error |
+| Missing-order fix | `09d4f90` | 26 passed |
+| Coverage and business tests | `39ad32d` | 28 passed |
+| Swagger and contract test | `9f7f531` | 29 passed |
+| Docker | `0b90b29` | 29 passed locally and inside the build |
 
 ## 1. Project overview
 
@@ -42,7 +58,7 @@ Introduction commit: `071ae40da3ab173ad6b2e7b68dd2d281ae03d55c`.
 | Order total recalculation | Replacing items accumulates the previous stored total instead of recalculating from current items. | [Bug 2](../bugs/02-order-total-recalculation.md) |
 | Missing order error handling | A GET for an unknown order throws an unmapped exception and returns HTTP 500 instead of 404. | [Bug 3](../bugs/03-missing-order-error-handling.md) |
 
-At this stage, the original suite had **19 passing tests and 2 failing tests**, and **15 unrelated HTTP validations passed**. This is the pre-regression-test milestone recorded in [validation history](../VALIDATION.md), even though that document labels it "Current debugging version". The newer regression milestone below supersedes that test count.
+At this stage, the original suite had **19 passing tests and 2 failing tests**, and **15 unrelated HTTP validations passed**. This is the pre-regression-test milestone recorded in [validation history](../VALIDATION.md). The newer regression milestone below supersedes that test count.
 
 ## 4. Bug reproduction evidence
 
@@ -104,7 +120,7 @@ Real HTTP on port 8082 confirmed initial total 20.00, updated and retrieved tota
 
 The unchanged targeted regression failed with 500 before the fix and passed with 404 afterward. Both full Maven commands passed all 26 tests. The generated executable JAR started on port 8083, and 13 actual HTTP requests verified 404 for missing/deleted orders, 200 for existing orders, working creation/update, stock 409 with no persisted order, and correct 20.00-to-50.00 totals that do not accumulate.
 
-Source revision: the dedicated commit containing this final fix entry, titled `fix: return not found for missing orders`. See [root cause and before/after responses](../bugs/03-missing-order-error-handling.md#fix-evidence). No screenshots were captured.
+Source revision: `09d4f90` (`fix: return not found for missing orders`). See [root cause and before/after responses](../bugs/03-missing-order-error-handling.md#fix-evidence). No screenshots were captured.
 
 For each future fix, add the diagnosis, minimal code change, commit, passing regression result, and real before/after HTTP evidence. Do not mark a bug fixed based only on a planned change.
 
@@ -140,13 +156,13 @@ Sources: [final regression results](../regression-tests.md) and [final HTTP evid
 
 Values come from the final XML counters, not estimates. The report includes all application code subject to standard JaCoCo bytecode filters; no custom exclusions or arbitrary threshold was introduced. The uncovered code is the application `main` method. Business packages have full measured line coverage, but these numbers do not prove all input combinations or business scenarios are tested.
 
-The first 26-test report and the 28-test coverage report had identical percentages (98.82% lines). The 29-test OpenAPI report additionally covers the documentation configuration and has the counters above. Two integration tests were added for meaningful scenario gaps: rejecting duplicate-email updates without changing data, and preserving stock across a later product edit that omits stock. Neither exists merely to increase coverage. Source revision: the dedicated commit containing this coverage entry, titled `test: add JaCoCo coverage and business scenario checks`.
+The first 26-test report and the 28-test coverage report had identical percentages (98.82% lines). The 29-test OpenAPI report additionally covers the documentation configuration and has the counters above. Two integration tests were added for meaningful scenario gaps: rejecting duplicate-email updates without changing data, and preserving stock across a later product edit that omits stock. Neither exists merely to increase coverage. Source revision: `39ad32d` (`test: add JaCoCo coverage and business scenario checks`).
 
 Sources: [testing strategy and full results](../testing.md), [Maven configuration](../../pom.xml), and the locally generated report at `target/site/jacoco/index.html` (not committed). Screenshot `07-jacoco-coverage.png` is now ready for later genuine capture; no screenshot was taken.
 
 ## 9. API documentation
 
-Available now: the [README endpoint table and curl examples](../../README.md#main-endpoints), request/response details in the [bug reports](../bugs/), and executable HTTP regression tests.
+Available now: the [README endpoint table](../../README.md#important-endpoints), request/response details in the [bug reports](../bugs/), and executable HTTP regression tests.
 
 **Swagger/OpenAPI verified.** `springdoc-openapi-starter-webmvc-ui` 2.8.13 documents 15 operations under Customers, Products, and Orders, with parameters, request/response DTOs, examples, and applicable 200/201/204/400/404/409 responses. Title: Spring Boot Bug Fix Lab API; version: 0.0.1.
 
@@ -158,13 +174,13 @@ Default URLs:
 
 Final verification used the packaged application on port 8085. Headless Chromium opened the actual UI and executed 11 requests via Try it out: create customer/product, list both, reject an order with stock 2 / quantity 5 (409), verify no order was stored, create two units successfully (201, total 20.00), retrieve and replace that order (200, new total 10.00), retrieve missing order 999999 (404), and submit empty items (400). All 15 operations were visible; no JavaScript page errors occurred. No screenshots were captured.
 
-`ApiIntegrationTest.publishesOpenApiOperationsAndValidatedRequestSchemas` verifies the generated specification, including matching minimum-item constraints and top-level validation errors. Final `mvn clean verify`: 29 passes, zero failures/errors/skips, BUILD SUCCESS. Source revision: the dedicated commit containing this entry, titled `docs: add OpenAPI specification and Swagger UI`.
+`ApiIntegrationTest.publishesOpenApiOperationsAndValidatedRequestSchemas` verifies the generated specification, including matching minimum-item constraints and top-level validation errors. Final `mvn clean verify`: 29 passes, zero failures/errors/skips, BUILD SUCCESS. Source revision: `9f7f531` (`docs: add OpenAPI specification and Swagger UI`).
 
-Screenshots 08 and 13–15 are planned for genuine future captures. See the [README walkthrough](../../README.md#interactive-api-documentation) and [testing notes](../testing.md#openapi-contract-verification).
+Screenshots 08 and 13–15 are planned for genuine future captures. See the [execution runbook](../running.md) and [testing notes](../testing.md#openapi-contract-verification).
 
 ## 10. Docker execution
 
-**Verified on October 5, 2026.** The repository now includes [Dockerfile](../../Dockerfile), [docker-compose.yml](../../docker-compose.yml), and [.dockerignore](../../.dockerignore). Source revision: the dedicated commit containing this entry, titled `build: containerize Spring Boot application with Docker Compose`.
+**Verified on October 5, 2026.** The repository now includes [Dockerfile](../../Dockerfile), [docker-compose.yml](../../docker-compose.yml), and [.dockerignore](../../.dockerignore). Source revision: `0b90b29` (`build: containerize Spring Boot application with Docker Compose`).
 
 ### Image and runtime design
 
@@ -191,7 +207,7 @@ APP_PORT=8086 docker compose \
   up --build -d --wait --wait-timeout 120
 ```
 
-The `/tmp` override and settings are session-specific, not committed or required on an ordinary workstation. Standard execution uses the repository's Compose file alone. See [README setup](../../README.md#run-with-docker) for both paths.
+The `/tmp` override and settings are session-specific, not committed or required on an ordinary workstation. Standard execution uses the repository's Compose file alone. See [runbook setup](../running.md#run-with-docker) for both paths.
 
 The command succeeded. `docker compose ps` reported `spring-boot-bug-fix-lab-app-1` healthy, mapping host 8086 to container 8080. Port 8086 avoided previous non-container servers; the default host port remains 8080. Logs reported Tomcat on port 8080 and successful Spring Boot startup. Docker inspection confirmed the intended runtime restrictions and absence of the temporary secret files.
 

@@ -81,6 +81,7 @@ Executed on October 5, 2026 with Java 21 and Maven 3.9.11:
 | Original suite verified | `mvn verify` | BUILD SUCCESS; 26 passed, 0 failures/errors/skips. |
 | Two business-scenario tests added | `mvn clean verify` | BUILD SUCCESS; 28 passed, 0 failures/errors/skips; report and executable JAR regenerated. |
 | OpenAPI contract test added | `mvn clean verify` | BUILD SUCCESS; 29 passed, 0 failures/errors/skips; original tests preserved. |
+| Final quality audit | `mvn clean verify` | BUILD SUCCESS; 29 passed, 0 failures/errors/skips; coverage counters unchanged. The Docker build independently reran the same 29 tests successfully. |
 
 No skipped-test flags were used. The final run starts with `clean`, removing previous compiled classes, execution data, and reports.
 
@@ -137,3 +138,5 @@ Both are in [ApiIntegrationTest.java](../src/test/java/com/example/bugfixlab/Api
 - Class coverage means some executable code in a class was visited, not that every method or requirement was verified. The bootstrap class is counted as covered even though `main` is not.
 
 The relevant business packages have no measured low-coverage area. Further tests should be justified by a concrete behavior or risk, not by filling the remaining bootstrap gap.
+
+The [final audit](portfolio/final-audit.md) records the latest container, HTTP, and browser checks separately from automated coverage.

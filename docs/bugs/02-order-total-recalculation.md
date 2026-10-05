@@ -79,7 +79,7 @@ A separate GET returned the same total 50.00. Additional real HTTP checks confir
 
 ### Pending screenshots
 
-No screenshots were captured. Capture the passing targeted regression and real 20.00-to-50.00 PUT/GET result later as `12-order-total-corrected.png`; include a repeated update to show the absence of accumulation. Capture the pre-fix `03-order-total-bug.png` only from a genuine rerun of a pre-fix commit. The full-suite all-green screenshot remains blocked by bug 3.
+No screenshots were captured. Capture the passing targeted regression and real 20.00-to-50.00 PUT/GET result later as `12-order-total-corrected.png`; include a repeated update to show the absence of accumulation. Capture the pre-fix `03-order-total-bug.png` only from a genuine rerun of a pre-fix commit. At this milestone, bug 3 still blocked the all-green screenshot. It is now fixed, and the latest suite passes all 29 tests.
 
 ## Historical evidence before the fix
 

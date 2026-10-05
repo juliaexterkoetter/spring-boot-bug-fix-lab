@@ -44,7 +44,7 @@ The same HTTP session confirmed bugs 2 and 3 remain: after increasing available 
 
 ### Pending screenshots
 
-No screenshot was captured in this task. Capture `09-stock-validation-error.png` later from a genuine execution showing stock 2, quantity 5, HTTP 409, and no persisted order. Preserve the historical before-fix capture plan for `02-insufficient-stock-bug.png` by using a pre-fix commit. Do not present the currently failing full suite as all-green.
+No screenshot was captured in this task. Capture `09-stock-validation-error.png` later from a genuine execution showing stock 2, quantity 5, HTTP 409, and no persisted order. Preserve the historical before-fix capture plan for `02-insufficient-stock-bug.png` by using a pre-fix commit. The suite was still failing at this stock-fix milestone; the latest suite now passes all 29 tests.
 
 ## Historical evidence before the fix
 
