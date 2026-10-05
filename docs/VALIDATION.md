@@ -1,4 +1,21 @@
-# Initial baseline validation
+# Validation history
+
+## Current debugging version
+
+Validated on October 5, 2026. All original test files remain unchanged.
+
+- `mvn -B test`: BUILD FAILURE; 21 tests, 19 passed, 2 failures, 0 errors, 0 skipped.
+- `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences`: expected total 89.97, actual 129.95 (bug 2).
+- `OrderServiceTest.reportsMissingOrder`: expected ResourceNotFoundException, actual NoSuchElementException (bug 3).
+- Stock availability has no coverage in the original test suite (bug 1).
+- `mvn -B -DskipTests package`: BUILD SUCCESS, used solely to obtain the executable demonstration JAR; tests were explicitly skipped for this command. Normal packaging remains blocked by the failing tests.
+- The packaged application started on port 8080. All three bugs were reproduced over HTTP; exact requests and formatted captured responses are recorded in [docs/bugs](bugs/).
+- Fifteen additional HTTP checks passed: resource lists, missing customer/product lookups, missing-order update/delete, negative stock and price validation, duplicate email rejection, backward-compatible omitted stock, and deletion protection/cleanup.
+- The first sandboxed test attempt stalled during Mockito JVM attachment and was stopped. The reported test results come from the subsequent run with the necessary execution permissions.
+
+## Historical clean baseline
+
+The results below apply to commit `e04266c917465b881984f27783fcc8f43bc3a72d`, not to the intentionally faulty version above.
 
 Validated on October 5, 2026 in the managed project workspace.
 

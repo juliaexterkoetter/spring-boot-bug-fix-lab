@@ -26,7 +26,9 @@ public class OrderService {
         return repository.findAll(Sort.by("id")).stream().map(this::toResponse).toList();
     }
 
-    public OrderResponse findById(Long id) { return toResponse(requireById(id)); }
+    public OrderResponse findById(Long id) {
+        return toResponse(repository.findById(id).orElseThrow());
+    }
 
     private Order requireById(Long id) {
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));

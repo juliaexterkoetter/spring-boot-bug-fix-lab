@@ -25,6 +25,9 @@ public class Order {
     @OrderBy("id ASC")
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column(nullable = false, precision = 24, scale = 2)
+    private BigDecimal total = new BigDecimal("0.00");
+
     protected Order() {}
 
     public Order(Customer customer) { this.customer = customer; }
@@ -36,9 +39,11 @@ public class Order {
     public List<OrderItem> getItems() { return Collections.unmodifiableList(items); }
     public void clearItems() { items.clear(); }
     public void addItem(Product product, int quantity) {
-        items.add(new OrderItem(this, product, quantity));
+        OrderItem item = new OrderItem(this, product, quantity);
+        items.add(item);
+        total = total.add(item.getSubtotal());
     }
     public BigDecimal getTotal() {
-        return items.stream().map(OrderItem::getSubtotal).reduce(new BigDecimal("0.00"), BigDecimal::add);
+        return total;
     }
 }

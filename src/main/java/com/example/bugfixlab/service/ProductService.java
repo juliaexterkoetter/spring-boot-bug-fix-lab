@@ -37,6 +37,7 @@ public class ProductService {
         Product entity = id == null ? new Product(request.name(), request.price()) : requireById(id);
         entity.setName(request.name().strip());
         entity.setPrice(request.price());
+        if (request.stock() != null) entity.setStock(request.stock());
         return toResponse(repository.saveAndFlush(entity));
     }
 
@@ -47,6 +48,6 @@ public class ProductService {
     }
 
     private ProductResponse toResponse(Product entity) {
-        return new ProductResponse(entity.getId(), entity.getName(), entity.getPrice());
+        return new ProductResponse(entity.getId(), entity.getName(), entity.getPrice(), entity.getStock());
     }
 }

@@ -16,6 +16,9 @@ public class Product {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private int stock = 0;
+
     protected Product() {}
 
     public Product(String name, BigDecimal price) {
@@ -23,6 +26,8 @@ public class Product {
         this.price = price;
     }
 
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
     public Long getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
