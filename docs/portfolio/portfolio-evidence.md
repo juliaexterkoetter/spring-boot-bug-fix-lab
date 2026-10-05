@@ -2,7 +2,7 @@
 
 This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. All three documented defects are fixed and verified.
 
-Last documentation review: October 5, 2026. The latest missing-order fix step reran the targeted test, full suite, packaging, and real HTTP verification. Historical results retain their milestone context.
+Last documentation review: October 5, 2026. The latest coverage step ran `mvn clean test`, `mvn verify`, and `mvn clean verify`, added two useful integration scenarios, and generated a fresh JaCoCo report without production changes. Historical results retain their milestone context.
 
 When adding evidence, record the date, source commit, command or HTTP request, expected and actual result, and a link to the report or genuine screenshot. Preserve historical results instead of replacing them with later results. A planned screenshot is not evidence of execution.
 
@@ -62,7 +62,7 @@ To reproduce the intentionally broken application, its JAR was packaged with tes
 
 ## 5. Regression test evidence
 
-Final missing-order fix run: **26 tests, 26 passes, 0 failures, 0 errors, 0 skipped**. All three original regression scenarios, stock boundary tests, and the previously blocked GET-after-delete check pass. Both `mvn test` and `mvn package` report BUILD SUCCESS. See the latest section of the [regression report](../regression-tests.md).
+Current coverage milestone: **28 tests, 28 passes, 0 failures, 0 errors, 0 skipped**, verified by `mvn clean verify`. The final missing-order fix milestone had **26 tests, 26 passes, 0 failures, 0 errors, 0 skipped**. All three original regression scenarios, stock boundary tests, and the previously blocked GET-after-delete check pass. Both `mvn test` and `mvn package` report BUILD SUCCESS. See the latest section of the [regression report](../regression-tests.md).
 
 ### Historical regression introduction
 
@@ -110,17 +110,33 @@ For each future fix, add the diagnosis, minimal code change, commit, passing reg
 
 ## 7. Final test results
 
+**Latest coverage milestone:** 28 tests passed with 0 failures/errors/skips in `mvn clean verify`; the executable JAR and JaCoCo report were regenerated. The original 26 tests also passed with instrumentation in both `mvn clean test` and `mvn verify` before adding the two scenarios. No production source or existing test assertion changed. See [testing evidence](../testing.md).
+
+### Historical final bug-fix milestone
+
 **Verified on October 5, 2026:** `mvn test` and `mvn package` both exited 0 with BUILD SUCCESS. Each executed 26 tests with 26 passes, 0 failures, 0 errors, and 0 skipped tests. No tests were skipped during packaging.
 
 Breakdown: 17 API integration test invocations, 4 service unit tests, and 5 HTTP regression tests. The executable JAR started successfully and passed the final HTTP checks described above. These results belong to the final missing-order fix commit containing this record; the original 21-test baseline is retained separately.
 
-Sources: [final regression results](../regression-tests.md) and [final HTTP evidence](../bugs/03-missing-order-error-handling.md#fix-evidence). Coverage, Swagger, and Docker are still pending and are not implied by this successful build.
+Sources: [final regression results](../regression-tests.md) and [final HTTP evidence](../bugs/03-missing-order-error-handling.md#fix-evidence). At that milestone, coverage, Swagger, and Docker were pending; the coverage result added afterward is recorded below.
 
 ## 8. Code coverage
 
-**Pending.** JaCoCo is not configured, and no coverage report or percentage has been measured. Passing-test counts are not coverage measurements.
+**Verified on October 5, 2026.** JaCoCo 0.8.13 attaches to the test JVM and generates HTML, XML, and CSV reports in the test phase. A fresh `mvn clean verify` executed 28 tests successfully and generated `target/site/jacoco/index.html`.
 
-After coverage tooling is added in a later task, link the generated report and record the measured scope and percentages. Screenshot `07-jacoco-coverage.png` is planned, not available.
+| Counter | Covered / total | Coverage |
+| --- | --- | --- |
+| Instructions | 949 / 954 | 99.48% |
+| Branches | 16 / 16 | 100.00% |
+| Lines | 167 / 169 | 98.82% |
+| Methods | 101 / 102 | 99.02% |
+| Classes | 23 / 23 | 100.00% |
+
+Values come from the final XML counters, not estimates. The report includes all application code subject to standard JaCoCo bytecode filters; no custom exclusions or arbitrary threshold was introduced. The uncovered code is the application `main` method. Business packages have full measured line coverage, but these numbers do not prove all input combinations or business scenarios are tested.
+
+The first 26-test report had identical percentages. Two integration tests were added for meaningful scenario gaps: rejecting duplicate-email updates without changing data, and preserving stock across a later product edit that omits stock. Neither exists merely to increase coverage. Source revision: the dedicated commit containing this coverage entry, titled `test: add JaCoCo coverage and business scenario checks`.
+
+Sources: [testing strategy and full results](../testing.md), [Maven configuration](../../pom.xml), and the locally generated report at `target/site/jacoco/index.html` (not committed). Screenshot `07-jacoco-coverage.png` is now ready for later genuine capture; no screenshot was taken.
 
 ## 9. API documentation
 
@@ -140,7 +156,7 @@ When implemented in a later task, record the image/build command, startup logs, 
 
 The current environment has no configured X11 or Wayland display and exposes no screen-capture tool for the terminal or running API. Although an ImageMagick capture binary is installed, there is no graphical session to capture. No artificial terminal image, rendered log image, generated screenshot, or placeholder PNG was created.
 
-The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06 and 10 now have verified final results ready for capture, along with the corrected-total scenario 12. Only 07, 08, and 11 still depend on future tooling. No screenshots were captured during any fix task.
+The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06 and 10 now have verified final results ready for capture, along with the corrected-total scenario 12. Scenario 07 now has a real JaCoCo report ready for later capture. Only 08 and 11 still depend on future tooling. No screenshots were captured during any fix task.
 
 When a real image is added, record its filename, capture date, source commit, command/request, and a factual caption here. If the baseline is rerun later, label the image as a rerun of the baseline commit, not an original historical capture.
 
@@ -156,6 +172,6 @@ Services this evidence can support:
 
 Suggested factual project description based on current evidence:
 
-> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed all three defects with minimal changes, preserved regression assertions, and verified correct stock rejection, totals, and HTTP 404 behavior. The final 26-test suite and Maven package build pass without skipped tests, and the packaged application passed real HTTP checks.
+> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed all three defects with minimal changes, preserved regression assertions, and verified correct stock rejection, totals, and HTTP 404 behavior. The 26-test bug-fix suite and Maven package build passed without skipped tests, and the packaged application passed real HTTP checks. The subsequent coverage milestone passes 28 tests with 98.82% measured line coverage, documented limits, and no custom coverage exclusions.
 
-All three documented fixes and the final passing suite/build are verified. Claims about coverage percentages, Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.
+All three documented fixes and the final passing suite/build are verified. Measured coverage is now documented above. Claims about Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.

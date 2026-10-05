@@ -10,7 +10,7 @@ All three documented debugging scenarios are now fixed:
 2. [Order total recalculation](docs/bugs/02-order-total-recalculation.md): fixed: replacing items resets and rebuilds the total from the replacement items.
 3. [Missing order error handling](docs/bugs/03-missing-order-error-handling.md): fixed: retrieving an unknown order returns HTTP 404 through the existing global exception handler.
 
-The suite has **26 passing tests, 0 failures, 0 errors, and 0 skipped tests**. Both `mvn test` and `mvn package` pass. Existing regression assertions are preserved. See [regression test results](docs/regression-tests.md) for the red-to-green history and real HTTP verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`; historical bug reports identify pre-fix revisions for reproducing the defects.
+The suite has **28 passing tests, 0 failures, 0 errors, and 0 skipped tests**. Both `mvn test` and `mvn package` pass. Existing regression assertions are preserved. See [regression test results](docs/regression-tests.md) for the red-to-green history and real HTTP verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`; historical bug reports identify pre-fix revisions for reproducing the defects.
 
 ## Technologies
 
@@ -58,7 +58,19 @@ mvn test
 mvn package
 ```
 
-Both commands run all 26 tests successfully, including the three original bug regression scenarios and two stock boundary tests. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
+Both commands run all 28 tests successfully, including the three original bug regression scenarios, stock boundary tests, and customer/product update checks. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
+
+## Test coverage
+
+JaCoCo 0.8.13 generates HTML, XML, and CSV reports during the normal test phase. To regenerate coverage and verify the complete build:
+
+```bash
+mvn clean verify
+```
+
+Open `target/site/jacoco/index.html`. The latest clean run passed all 28 tests: instructions 99.48%, branches 100.00%, lines 98.82%, methods 99.02%, and classes 100.00%. No coverage exclusions or skipped tests are configured. These counters do not imply exhaustive behavior coverage.
+
+See [testing strategy, measured counters, and known gaps](docs/testing.md). Generated reports remain under ignored `target/`.
 
 ## Main endpoints
 

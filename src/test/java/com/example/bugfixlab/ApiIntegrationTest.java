@@ -52,6 +52,59 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void rejectsDuplicateEmailOnUpdateWithoutChangingCustomer() throws Exception {
+        long owner = create("customers", """
+                {"name":"Email Owner","email":"owner@example.com"}
+                """);
+        long customer = create("customers", """
+                {"name":"Original Name","email":"original@example.com"}
+                """);
+
+        mvc.perform(put("/api/customers/{id}", customer).contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name":"Changed Name","email":"OWNER@example.com"}
+                        """))
+                .andExpect(status().isConflict());
+
+        mvc.perform(get("/api/customers/{id}", customer)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Original Name"))
+                .andExpect(jsonPath("$.email").value("original@example.com"));
+        mvc.perform(get("/api/customers/{id}", owner)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("owner@example.com"));
+        assertThat(customers.count()).isEqualTo(2);
+    }
+
+    @Test
+    void preservesUpdatedStockWhenLaterProductUpdateOmitsIt() throws Exception {
+        long customer = create("customers", """
+                {"name":"Stock Customer","email":"stock@example.com"}
+                """);
+        long product = create("products", """
+                {"name":"Keyboard","price":10.00,"stock":5}
+                """);
+
+        mvc.perform(put("/api/products/{id}", product).contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name":"Keyboard","price":10.00,"stock":2}
+                        """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.stock").value(2));
+        mvc.perform(put("/api/products/{id}", product).contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"name":"Updated Keyboard","price":12.00}
+                        """))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.stock").value(2));
+        mvc.perform(get("/api/products/{id}", product)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Keyboard"))
+                .andExpect(jsonPath("$.price").value(12.00))
+                .andExpect(jsonPath("$.stock").value(2));
+
+        mvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON)
+                .content(orderBody(customer, product, 3)))
+                .andExpect(status().isConflict());
+        assertThat(orders.count()).isZero();
+    }
+
+    @Test
     void productCrud() throws Exception {
         long id = create("products", "{\"name\":\"Keyboard\",\"price\":19.99}");
         mvc.perform(get("/api/products")).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
