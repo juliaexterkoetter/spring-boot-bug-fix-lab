@@ -1,6 +1,33 @@
 # Regression tests for the debugging lab
 
-## Latest result: order total recalculation fix
+## Final result: missing-order handling fixed
+
+Validated on October 5, 2026. All three documented bugs are fixed. Production changed only in `OrderService.findById`, which now calls the existing `requireById` helper instead of throwing an unmapped `NoSuchElementException`. The global `ResourceNotFoundException` handler now produces 404 without duplicate controller logic. No test source or assertion changed.
+
+The targeted command `mvn -Dtest=OrderRegressionTest#returnsNotFoundWhenOrderDoesNotExist test` failed before the fix (expected 404, actual 500), then passed afterward: 1 test, 0 failures/errors/skips.
+
+Actual results from both `mvn test` and `mvn package`:
+
+| Suite | Executed | Passed | Failures | Errors | Skipped |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `ApiIntegrationTest` | 17 | 17 | 0 | 0 | 0 |
+| `OrderServiceTest` | 4 | 4 | 0 | 0 | 0 |
+| `OrderRegressionTest` | 5 | 5 | 0 | 0 | 0 |
+| **Total** | **26** | **26** | **0** | **0** | **0** |
+
+Both commands exited 0 and reported BUILD SUCCESS. Packaging generated the executable JAR with all tests enabled; no `-DskipTests` flag was used. All original test methods and assertions are preserved.
+
+The JAR started successfully on port 8083. Thirteen real HTTP requests verified missing orders return 404, existing orders return 200, creation returns 201, updates return 200, insufficient stock returns 409 without persistence, and totals change from 20.00 to 50.00 without accumulating on repeated PUT. Delete followed by GET returned 204 then 404. See [the final fix evidence](bugs/03-missing-order-error-handling.md#fix-evidence).
+
+The three original regression scenarios now pass:
+
+- `rejectsOrderWhenQuantityExceedsAvailableStock`: HTTP 409 and no persisted order.
+- `recalculatesOrderTotalWhenItemQuantityChanges`: PUT and GET total 50.00.
+- `returnsNotFoundWhenOrderDoesNotExist`: HTTP 404.
+
+The two stock boundary tests also pass. No screenshots were captured; final passing-suite and missing-order 404 evidence are ready for later genuine capture.
+
+## Historical result: order total recalculation fix
 
 Validated on October 5, 2026. Bugs 1 and 2 are fixed; only the missing-order bug remains open. No test source, fixture, or assertion changed in this step.
 

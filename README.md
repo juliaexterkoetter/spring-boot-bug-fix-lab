@@ -4,13 +4,13 @@ A small REST API for managing customers, products, and orders, used to demonstra
 
 ## Current debugging exercise
 
-Three debugging scenarios are documented; stock validation and total recalculation are fixed; missing-order handling remains intentionally broken:
+All three documented debugging scenarios are now fixed:
 
 1. [Insufficient stock](docs/bugs/01-insufficient-stock.md): fixed: order creation rejects quantities above available stock with HTTP 409.
 2. [Order total recalculation](docs/bugs/02-order-total-recalculation.md): fixed: replacing items resets and rebuilds the total from the replacement items.
-3. [Missing order error handling](docs/bugs/03-missing-order-error-handling.md): retrieving an unknown order returns 500 instead of 404.
+3. [Missing order error handling](docs/bugs/03-missing-order-error-handling.md): fixed: retrieving an unknown order returns HTTP 404 through the existing global exception handler.
 
-The suite currently has **26 tests: 23 passing, 2 assertion failures, and 1 error**. Stock and total tests pass; all remaining unsuccessful tests concern missing-order handling. Existing assertions are preserved; valid-order fixtures now provide sufficient stock. See [regression test results](docs/regression-tests.md). A normal `mvn package` fails at the test phase. To run the intentionally faulty demonstration, use `mvn -DskipTests package` and then the executable JAR. This is not a successful test verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`.
+The suite has **26 passing tests, 0 failures, 0 errors, and 0 skipped tests**. Both `mvn test` and `mvn package` pass. Existing regression assertions are preserved. See [regression test results](docs/regression-tests.md) for the red-to-green history and real HTTP verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`; historical bug reports identify pre-fix revisions for reproducing the defects.
 
 ## Technologies
 
@@ -39,7 +39,7 @@ mvn spring-boot:run
 The API listens at `http://localhost:8080`. Alternatively, build and run the executable JAR:
 
 ```bash
-mvn -DskipTests package
+mvn package
 java -jar target/spring-boot-bug-fix-lab-0.0.1-SNAPSHOT.jar
 ```
 
@@ -58,7 +58,7 @@ mvn test
 mvn package
 ```
 
-Both commands run the JUnit 5 suite and currently fail because of the intentional defects described above. The remaining assertion failures are `OrderServiceTest.reportsMissingOrder` and `OrderRegressionTest.returnsNotFoundWhenOrderDoesNotExist`. `ApiIntegrationTest.orderCrudPreservesPricesAndProtectsReferences` now passes its total assertions but errors on its later GET after deleting the order. All three results are caused by the intentionally open missing-order bug and are described in the regression report. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
+Both commands run all 26 tests successfully, including the three original bug regression scenarios and two stock boundary tests. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
 
 ## Main endpoints
 
@@ -114,7 +114,7 @@ An order response includes `id`, `customerId`, `createdAt` (UTC), `items`, and `
 - Customers and products referenced by orders cannot be deleted. Delete the relevant orders first. Deleting an order also deletes its items.
 - Unknown JSON fields and fractional values for integer fields are rejected.
 
-Except for the intentionally broken missing-order GET (bug 3), errors use Spring's Problem Details format (`application/problem+json`): `400` for invalid input, `404` for missing resources, and `409` for conflicting data. Validation responses include an `errors` array with English `field` and `message` values. SQL details are not exposed.
+Errors use Spring's Problem Details format (`application/problem+json`): `400` for invalid input, `404` for missing resources, and `409` for conflicting data. Validation responses include an `errors` array with English `field` and `message` values. SQL details are not exposed.
 
 ## Structure
 

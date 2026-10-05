@@ -31,7 +31,7 @@ public class OrderService {
     }
 
     public OrderResponse findById(Long id) {
-        return toResponse(repository.findById(id).orElseThrow());
+        return toResponse(requireById(id));
     }
 
     private Order requireById(Long id) {

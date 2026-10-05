@@ -1,6 +1,6 @@
 # Bug 2: Order total recalculation
 
-**Status: fixed on October 5, 2026.** The missing-order error-handling bug remains intentionally open.
+**Status: fixed on October 5, 2026.** The missing-order error-handling bug was still open at that milestone; it is now fixed, as recorded in the [final regression report](../regression-tests.md).
 
 ## Fix evidence
 

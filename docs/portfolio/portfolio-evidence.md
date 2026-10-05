@@ -1,8 +1,8 @@
 # Portfolio evidence
 
-This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. The stock and total defects are fixed; only the missing-order defect remains.
+This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. All three documented defects are fixed and verified.
 
-Last documentation review: October 5, 2026. The latest total-fix step reran the targeted test, full suite, packaging, and real HTTP verification. Historical results retain their milestone context.
+Last documentation review: October 5, 2026. The latest missing-order fix step reran the targeted test, full suite, packaging, and real HTTP verification. Historical results retain their milestone context.
 
 When adding evidence, record the date, source commit, command or HTTP request, expected and actual result, and a link to the report or genuine screenshot. Preserve historical results instead of replacing them with later results. A planned screenshot is not evidence of execution.
 
@@ -30,7 +30,7 @@ Verified baseline commit: `e04266c917465b881984f27783fcc8f43bc3a72d`.
 | Application startup | The packaged application started successfully with embedded Tomcat on port 8080. |
 | Real HTTP validation | 24 checks passed, covering CRUD, totals, price snapshots, validation, missing resources, and deletion protection. |
 
-Source: the historical baseline section of [validation history](../VALIDATION.md). These are results from the clean baseline, not claims that the current intentionally faulty version passes.
+Source: the historical baseline section of [validation history](../VALIDATION.md). These are results from the clean baseline, distinct from the final 26-test verification recorded below.
 
 ## 3. Controlled bugs introduced
 
@@ -62,7 +62,7 @@ To reproduce the intentionally broken application, its JAR was packaged with tes
 
 ## 5. Regression test evidence
 
-Latest total-fix run: **26 tests, 23 passes, 2 assertion failures, 1 error, 0 skipped**. Both stock and total regressions pass. All remaining unsuccessful tests concern bug 3, including a later missing-order check now reached by the existing CRUD test. See the latest section of the [regression report](../regression-tests.md).
+Final missing-order fix run: **26 tests, 26 passes, 0 failures, 0 errors, 0 skipped**. All three original regression scenarios, stock boundary tests, and the previously blocked GET-after-delete check pass. Both `mvn test` and `mvn package` report BUILD SUCCESS. See the latest section of the [regression report](../regression-tests.md).
 
 ### Historical regression introduction
 
@@ -90,21 +90,31 @@ Real HTTP on the newly packaged application (port 8081) returned 409 for stock 2
 
 Both `mvn test` and `mvn package` failed only on the four remaining bug-2/bug-3 assertions. `mvn -DskipTests package` succeeded solely for the runnable verification artifact. This is not a green full build. Source revision: `fa7589ac473499f50e385e4055f1039c5736b3ef`, titled `fix: reject order creation when requested quantity exceeds stock`. See [root cause, correction, and before/after evidence](../bugs/01-insufficient-stock.md#fix-evidence).
 
-### Total recalculation fix
+### Historical total recalculation fix
 
-**Bugs 1 and 2 fixed; bug 3 pending.** The targeted total test first failed with 70.00 instead of 50.00, then passed without any test changes. Root cause: `clearItems()` removed items but kept the old total. The minimal entity change resets the total when clearing items; the existing subtotal accumulation then builds the replacement total without duplicated logic. Price snapshots and current-price replacement behavior remain intact.
+**Bugs 1 and 2 fixed at this milestone; bug 3 was pending.** The targeted total test first failed with 70.00 instead of 50.00, then passed without any test changes. Root cause: `clearItems()` removed items but kept the old total. The minimal entity change resets the total when clearing items; the existing subtotal accumulation then builds the replacement total without duplicated logic. Price snapshots and current-price replacement behavior remain intact.
 
 Real HTTP on port 8082 confirmed initial total 20.00, updated and retrieved total 50.00, repeated PUT still 50.00, and a multiple-item replacement totaling 15.00. A product price change did not affect the existing order; the next order replacement used the new price. Stock rejection remains 409 and missing-order GET remains 500.
 
-`mvn test` and `mvn package` both reported 26 tests, 23 passes, 2 assertion failures, and 1 error, all remaining problems caused by bug 3. No skipped-test packaging was used. Application startup via `mvn spring-boot:run` was used only for HTTP verification and is not a final build claim. Source revision: the dedicated commit containing this total-fix entry, titled `fix: reset order total when replacing items`. See [the detailed fix evidence](../bugs/02-order-total-recalculation.md#fix-evidence).
+`mvn test` and `mvn package` both reported 26 tests, 23 passes, 2 assertion failures, and 1 error, all remaining problems caused by bug 3. No skipped-test packaging was used. Application startup via `mvn spring-boot:run` was used only for HTTP verification and is not a final build claim. Source revision: `7dc887d2672562c93b1f84a3dcd5dd82ad5a2193`, titled `fix: reset order total when replacing items`. See [the detailed fix evidence](../bugs/02-order-total-recalculation.md#fix-evidence).
+
+### Missing-order handling fix
+
+**All three bugs fixed.** Root cause: the GET path threw an unmapped `NoSuchElementException`. `OrderService.findById` now uses `requireById`, reusing `ResourceNotFoundException` and the existing global 404 handler. The production change is one line, with no changes to tests, controllers, stock validation, or total calculation.
+
+The unchanged targeted regression failed with 500 before the fix and passed with 404 afterward. Both full Maven commands passed all 26 tests. The generated executable JAR started on port 8083, and 13 actual HTTP requests verified 404 for missing/deleted orders, 200 for existing orders, working creation/update, stock 409 with no persisted order, and correct 20.00-to-50.00 totals that do not accumulate.
+
+Source revision: the dedicated commit containing this final fix entry, titled `fix: return not found for missing orders`. See [root cause and before/after responses](../bugs/03-missing-order-error-handling.md#fix-evidence). No screenshots were captured.
 
 For each future fix, add the diagnosis, minimal code change, commit, passing regression result, and real before/after HTTP evidence. Do not mark a bug fixed based only on a planned change.
 
 ## 7. Final test results
 
-**Pending.** No final, all-green result exists for the expanded regression suite. The latest recorded result remains 23 passes, 2 assertion failures, and 1 error out of 26 tests, all unsuccessful results caused by bug 3.
+**Verified on October 5, 2026:** `mvn test` and `mvn package` both exited 0 with BUILD SUCCESS. Each executed 26 tests with 26 passes, 0 failures, 0 errors, and 0 skipped tests. No tests were skipped during packaging.
 
-After the bugs are fixed, record the actual full-suite counts, Maven build result, source commit, and verification date. The historical 21-test baseline must not be presented as the post-fix result.
+Breakdown: 17 API integration test invocations, 4 service unit tests, and 5 HTTP regression tests. The executable JAR started successfully and passed the final HTTP checks described above. These results belong to the final missing-order fix commit containing this record; the original 21-test baseline is retained separately.
+
+Sources: [final regression results](../regression-tests.md) and [final HTTP evidence](../bugs/03-missing-order-error-handling.md#fix-evidence). Coverage, Swagger, and Docker are still pending and are not implied by this successful build.
 
 ## 8. Code coverage
 
@@ -130,7 +140,7 @@ When implemented in a later task, record the image/build command, startup logs, 
 
 The current environment has no configured X11 or Wayland display and exposes no screen-capture tool for the terminal or running API. Although an ImageMagick capture binary is installed, there is no graphical session to capture. No artificial terminal image, rendered log image, generated screenshot, or placeholder PNG was created.
 
-The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06–08 and 10–11 still depend on future fixes or tooling. Scenario 12 now records the planned corrected-total capture. No screenshots were captured during either fix task.
+The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06 and 10 now have verified final results ready for capture, along with the corrected-total scenario 12. Only 07, 08, and 11 still depend on future tooling. No screenshots were captured during any fix task.
 
 When a real image is added, record its filename, capture date, source commit, command/request, and a factual caption here. If the baseline is rerun later, label the image as a rerun of the baseline commit, not an original historical capture.
 
@@ -146,6 +156,6 @@ Services this evidence can support:
 
 Suggested factual project description based on current evidence:
 
-> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed stock validation and order total recalculation, verified rejection without persistence and correct totals through HTTP. The current 26-test suite has 23 passes, with two assertion failures and one error from the remaining missing-order defect.
+> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed all three defects with minimal changes, preserved regression assertions, and verified correct stock rejection, totals, and HTTP 404 behavior. The final 26-test suite and Maven package build pass without skipped tests, and the packaged application passed real HTTP checks.
 
-Stock and total fixes are verified. Claims about completing all bug fixes, a final all-green suite, coverage percentages, Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.
+All three documented fixes and the final passing suite/build are verified. Claims about coverage percentages, Swagger, Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.

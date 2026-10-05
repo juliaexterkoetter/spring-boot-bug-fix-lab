@@ -1,6 +1,6 @@
 # Bug 1: Insufficient stock
 
-**Status: fixed for order creation on October 5, 2026.** Historical reproduction is retained below. Bugs 2 and 3 remain intentionally unfixed.
+**Status: fixed for order creation on October 5, 2026.** Historical reproduction is retained below. Bugs 2 and 3 were still open at that milestone; both are now fixed, as recorded in the [final regression report](../regression-tests.md).
 
 ## Fix evidence
 
