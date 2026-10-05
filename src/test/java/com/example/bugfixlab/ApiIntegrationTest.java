@@ -35,6 +35,35 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void publishesOpenApiOperationsAndValidatedRequestSchemas() throws Exception {
+        var result = mvc.perform(get("/v3/api-docs")).andExpect(status().isOk()).andReturn();
+        JsonNode spec = mapper.readTree(result.getResponse().getContentAsString());
+        assertThat(spec.at("/info/title").asText()).isEqualTo("Spring Boot Bug Fix Lab API");
+        assertThat(spec.at("/info/version").asText()).isEqualTo("0.0.1");
+        for (String resource : new String[]{"customers", "products", "orders"}) {
+            JsonNode collection = spec.get("paths").get("/api/" + resource);
+            JsonNode item = spec.get("paths").get("/api/" + resource + "/{id}");
+            assertThat(collection.get("get").get("responses").has("200")).isTrue();
+            assertThat(collection.get("post").get("responses").has("201")).isTrue();
+            assertThat(item.get("get").get("responses").has("404")).isTrue();
+            assertThat(item.get("put").get("responses").has("400")).isTrue();
+            assertThat(item.get("delete").get("responses").has("204")).isTrue();
+        }
+        JsonNode orderCreation = spec.get("paths").get("/api/orders").get("post");
+        assertThat(orderCreation.get("responses").has("409")).isTrue();
+        assertThat(orderCreation.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/OrderRequest");
+        JsonNode schemas = spec.at("/components/schemas");
+        assertThat(schemas.at("/OrderRequest/properties/items/minItems").asInt()).isEqualTo(1);
+        assertThat(schemas.at("/OrderRequest/properties/items/maxItems").asInt()).isEqualTo(100);
+        assertThat(schemas.at("/OrderRequest/properties/items/items/$ref").asText())
+                .isEqualTo("#/components/schemas/OrderItemRequest");
+        assertThat(schemas.at("/ProductRequest/properties/stock/minimum").asInt(-1)).isZero();
+        assertThat(schemas.at("/ProblemDetail/properties").has("properties")).isFalse();
+        assertThat(schemas.at("/ProblemDetail/properties/errors/items/properties").has("field")).isTrue();
+    }
+
+    @Test
     void customerCrudAndDuplicateEmail() throws Exception {
         long id = create("customers", """
                 {"name":"Alex","email":"alex@example.com"}

@@ -10,7 +10,7 @@ All three documented debugging scenarios are now fixed:
 2. [Order total recalculation](docs/bugs/02-order-total-recalculation.md): fixed: replacing items resets and rebuilds the total from the replacement items.
 3. [Missing order error handling](docs/bugs/03-missing-order-error-handling.md): fixed: retrieving an unknown order returns HTTP 404 through the existing global exception handler.
 
-The suite has **28 passing tests, 0 failures, 0 errors, and 0 skipped tests**. Both `mvn test` and `mvn package` pass. Existing regression assertions are preserved. See [regression test results](docs/regression-tests.md) for the red-to-green history and real HTTP verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`; historical bug reports identify pre-fix revisions for reproducing the defects.
+The suite has **29 passing tests, 0 failures, 0 errors, and 0 skipped tests**. Both `mvn test` and `mvn package` pass. Existing regression assertions are preserved. See [regression test results](docs/regression-tests.md) for the red-to-green history and real HTTP verification. The clean baseline remains available in commit `e04266c917465b881984f27783fcc8f43bc3a72d`; historical bug reports identify pre-fix revisions for reproducing the defects.
 
 ## Technologies
 
@@ -58,7 +58,7 @@ mvn test
 mvn package
 ```
 
-Both commands run all 28 tests successfully, including the three original bug regression scenarios, stock boundary tests, and customer/product update checks. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
+Both commands run all 29 tests successfully, including the three original bug regression scenarios, stock boundary tests, customer/product update checks, and the generated OpenAPI contract. Unit tests use Mockito to test order calculations and missing products. Integration tests use the full Spring context, MockMvc, and a real H2 database to verify CRUD operations, validation, duplicate emails, referential integrity, price snapshots, and transaction rollback. The database is cleaned before each integration test.
 
 ## Test coverage
 
@@ -68,9 +68,29 @@ JaCoCo 0.8.13 generates HTML, XML, and CSV reports during the normal test phase.
 mvn clean verify
 ```
 
-Open `target/site/jacoco/index.html`. The latest clean run passed all 28 tests: instructions 99.48%, branches 100.00%, lines 98.82%, methods 99.02%, and classes 100.00%. No coverage exclusions or skipped tests are configured. These counters do not imply exhaustive behavior coverage.
+Open `target/site/jacoco/index.html`. The latest clean run passed all 29 tests: instructions 99.51%, branches 100.00%, lines 98.90%, methods 99.05%, and classes 100.00%. No coverage exclusions or skipped tests are configured. These counters do not imply exhaustive behavior coverage.
 
 See [testing strategy, measured counters, and known gaps](docs/testing.md). Generated reports remain under ignored `target/`.
+
+## Interactive API documentation
+
+The application uses `springdoc-openapi-starter-webmvc-ui` 2.8.13, compatible with Spring Boot 3.5. Start it with `mvn spring-boot:run` or the packaged JAR, then open:
+
+- [Swagger UI](http://localhost:8080/swagger-ui/index.html) (also available through `/swagger-ui.html`).
+- [OpenAPI JSON](http://localhost:8080/v3/api-docs).
+- [OpenAPI YAML](http://localhost:8080/v3/api-docs.yaml).
+
+The specification is titled **Spring Boot Bug Fix Lab API**, version **0.0.1**, and documents all 15 operations under Customers, Products, and Orders. It includes operation descriptions, path parameters, validated request schemas, examples, success responses, and relevant 400/404/409 errors. Delete operations return 204. Error schemas describe Problem Details with an optional top-level `errors` array for validation failures.
+
+Use **Try it out** to create a customer and product first, then copy their returned IDs into the order example. For a reproducible demonstration:
+
+1. Create a product priced at 10.00 with stock 2.
+2. Request five units in `POST /api/orders`: expect 409 and no saved order.
+3. Request two units: expect 201 and total 20.00; retrieve the order with GET.
+4. Replace its quantity with one using PUT: expect 200 and total 10.00.
+5. Request `GET /api/orders/999999`: expect 404 if that ID does not exist.
+
+Requests made through Swagger modify the same in-memory data as any API client. Stock is checked on creation only; order replacement uses current prices, and stock is not reserved or depleted. Examples are illustrative; always use IDs returned by your session.
 
 ## Main endpoints
 

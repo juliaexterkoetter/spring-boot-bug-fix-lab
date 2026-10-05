@@ -10,10 +10,10 @@ Coverage guides inspection but does not replace meaningful assertions. No artifi
 
 | Suite | Tests | Approach |
 | --- | ---: | --- |
-| `ApiIntegrationTest` | 19 | Full Spring context, MockMvc, and real H2 persistence; verifies CRUD, validation, uniqueness, transactions, and stock behavior. |
+| `ApiIntegrationTest` | 20 | Full Spring context, MockMvc, and real H2 persistence; verifies CRUD, validation, uniqueness, transactions, and stock behavior. |
 | `OrderServiceTest` | 4 | JUnit 5 and Mockito for focused service calculations and missing dependencies; also verifies item price snapshots. |
 | `OrderRegressionTest` | 5 | Embedded Tomcat on a random port, TestRestTemplate, and a dedicated H2 database; verifies real HTTP error dispatch, totals, stock rejection, exact stock, and repeated product lines. |
-| **Total** | **28** | **All passed; no failures, errors, or skipped tests.** |
+| **Total** | **29** | **All passed; no failures, errors, or skipped tests.** |
 
 Counts include parameterized invocations. Database cleanup isolates integration scenarios. No mocks were added to the new integration tests.
 
@@ -25,7 +25,7 @@ The original three regressions first failed against controlled defects, then pas
 - Order replacement: PUT and subsequent GET both return total 50.00 for five units at 10.00.
 - Missing order: a real HTTP request returns 404, not 500.
 
-See [regression history](regression-tests.md) and [bug reports](bugs/) for the before/after executions. The 26-test result in the final bug-fix report is a historical milestone; this coverage task adds two tests for a current total of 28.
+See [regression history](regression-tests.md) and [bug reports](bugs/) for the before/after executions. The 26-test result in the final bug-fix report is a historical milestone; the coverage task added two tests for 28, and the OpenAPI task added one contract test for a current total of 29.
 
 ## JaCoCo configuration
 
@@ -63,6 +63,14 @@ Other generated outputs:
 
 All are generated under ignored `target/`; they are not committed. No screenshots were captured.
 
+## OpenAPI contract verification
+
+`ApiIntegrationTest.publishesOpenApiOperationsAndValidatedRequestSchemas` requests `/v3/api-docs` through the full application and checks API metadata, the 15 operation groups, documented success/error responses, DTO references, item limits, non-negative stock, and the flattened Problem Details validation-error schema. It verifies documentation rather than modifying runtime validation.
+
+The OpenAPI customizer aligns the generated schema with existing behavior: `@Size` must not mask `@NotEmpty` as a zero minimum, and Jackson serializes Problem Details extensions at the top level. The original 28 tests are retained unchanged. Final `mvn clean verify` passed 29 tests with no failures/errors/skips and regenerated the executable JAR and coverage report.
+
+Separately, headless Chromium opened the final packaged application's Swagger UI on port 8085, loaded all 15 operations, and completed 11 requests using actual Try it out controls. Customer/product creation and lists, order creation/read/update, and 400/404/409 responses were verified. No JavaScript page errors or screenshots were recorded. This browser verification is not included in JaCoCo's Maven-test counters.
+
 ## Actual verification results
 
 Executed on October 5, 2026 with Java 21 and Maven 3.9.11:
@@ -72,6 +80,7 @@ Executed on October 5, 2026 with Java 21 and Maven 3.9.11:
 | JaCoCo added, original tests retained | `mvn clean test` | BUILD SUCCESS; 26 passed, 0 failures/errors/skips; HTML report generated. |
 | Original suite verified | `mvn verify` | BUILD SUCCESS; 26 passed, 0 failures/errors/skips. |
 | Two business-scenario tests added | `mvn clean verify` | BUILD SUCCESS; 28 passed, 0 failures/errors/skips; report and executable JAR regenerated. |
+| OpenAPI contract test added | `mvn clean verify` | BUILD SUCCESS; 29 passed, 0 failures/errors/skips; original tests preserved. |
 
 No skipped-test flags were used. The final run starts with `clean`, removing previous compiled classes, execution data, and reports.
 
@@ -81,16 +90,17 @@ Measured from the final clean run's XML report, with percentages rounded to two 
 
 | Counter | Covered | Total | Missed | Coverage |
 | --- | ---: | ---: | ---: | ---: |
-| Instructions | 949 | 954 | 5 | 99.48% |
+| Instructions | 1009 | 1014 | 5 | 99.51% |
 | Branches | 16 | 16 | 0 | 100.00% |
-| Lines | 167 | 169 | 2 | 98.82% |
-| Methods | 101 | 102 | 1 | 99.02% |
-| Classes | 23 | 23 | 0 | 100.00% |
+| Lines | 179 | 181 | 2 | 98.90% |
+| Methods | 104 | 105 | 1 | 99.05% |
+| Classes | 24 | 24 | 0 | 100.00% |
 
 Package review:
 
 | Package | Covered lines | Covered branches | Interpretation |
 | --- | --- | --- | --- |
+| `config` | 12/12 | Not applicable | OpenAPI schema customization exercised by the contract test. |
 | `service` | 67/67 | 16/16 | Business-service code and measured decisions executed. |
 | `entity` | 54/54 | Not applicable | No JaCoCo branch counters in these classes. |
 | `controller` | 24/24 | Not applicable | Endpoint delegation exercised. |
@@ -98,7 +108,7 @@ Package review:
 | `dto` | 8/8 | Not applicable | Measured DTO code executed; this is not exhaustive input validation coverage. |
 | Application bootstrap package | 1/3 | Not applicable | `BugFixLabApplication.main` is not invoked by the automated suite. |
 
-The first 26-test report had the same counters. The two new tests improve scenario protection without increasing the percentage, illustrating why coverage alone cannot establish correctness.
+The first 26-test report and subsequent 28-test report had identical counters: 949/954 instructions, 167/169 lines, 101/102 methods, and 23/23 classes. The two business-scenario tests improved protection without increasing those percentages. The current 29-test report also measures the newly added OpenAPI configuration; its executable lines are covered. None of these percentages establishes exhaustive correctness.
 
 ## Important covered scenarios
 
