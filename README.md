@@ -20,7 +20,16 @@ The suite has **29 passing tests, 0 failures, 0 errors, and 0 skipped tests**. B
 - H2 in-memory database
 - JUnit 5, Mockito, Spring Boot Test, and MockMvc
 
-## Run locally
+## Prerequisites
+
+Choose either execution path:
+
+- **Maven:** Java 21 JDK and Maven 3.9+.
+- **Docker:** Docker Engine or Docker Desktop with BuildKit and Docker Compose v2. Java and Maven do not need to be installed on the host for this path.
+
+Both paths need an available host port (8080 by default). The first build needs access to Maven Central; Docker also needs access to the base-image registry.
+
+## Run with Maven
 
 Check the prerequisites:
 
@@ -50,6 +59,67 @@ source /workspace/.tools/env.sh
 ```
 
 That workspace's Maven installation uses its configured outbound proxy and a dependency cache under `/workspace/.tools/m2`. These environment-specific settings are not required on a standard local installation.
+
+## Run with Docker
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+This builds the project, runs the full test suite with JaCoCo, and starts the API. For background execution with a readiness check:
+
+```bash
+docker compose up --build -d --wait
+docker compose ps
+docker compose logs -f app
+```
+
+The API is exposed on `http://localhost:8080`:
+
+- [Swagger UI](http://localhost:8080/swagger-ui/index.html).
+- [OpenAPI JSON](http://localhost:8080/v3/api-docs).
+- [OpenAPI YAML](http://localhost:8080/v3/api-docs.yaml).
+
+If port 8080 is already in use, select a different host port (the container still listens on 8080):
+
+```bash
+APP_PORT=8086 docker compose up --build -d --wait
+```
+
+Then use `http://localhost:8086` for the same paths. To stop the service and remove its container/network:
+
+```bash
+docker compose down
+```
+
+For a temporary stop without removing the container, use `docker compose stop`. H2 remains in memory, so application stops/restarts lose all data; there is no database container or persistence volume.
+
+### Container design
+
+- The build stage uses `maven:3.9.11-eclipse-temurin-21` and runs `mvn clean verify`, with no skipped tests. A BuildKit cache reuses downloaded Maven artifacts; unchanged Docker build layers may also be reused normally.
+- The final image uses `eclipse-temurin:21-jre-alpine` and contains only the JRE and application JAR. Both base images are pinned by digest in the Dockerfile; refresh those digests deliberately for updates.
+- Runtime UID/GID is `10001:10001`. Compose uses a read-only root filesystem, a writable temporary `/tmp`, dropped Linux capabilities, and `no-new-privileges`.
+- The health check requests `/v3/api-docs` locally. The process receives normal Docker shutdown signals, with a 20-second stop grace period.
+- `.dockerignore` includes only the build inputs (`pom.xml` and `src`) and Dockerfile, excluding Git history, local artifacts, and unrelated workspace files.
+- JaCoCo is generated in the build stage, not bundled with the running API. Run `mvn clean verify` locally to inspect `target/site/jacoco/index.html` on the host.
+
+### Builds behind a proxy
+
+Ordinary local builds require no extra files. Restricted environments may need Maven proxy settings and an additional Java trust store. The Dockerfile accepts optional BuildKit secrets named `maven_settings` and `java_cacerts`. They are mounted only for the Maven build step; neither is copied into an image layer or the final JAR.
+
+Example with environment-specific files outside the repository:
+
+```bash
+docker build \
+  --secret id=maven_settings,src=/path/to/settings.xml \
+  --secret id=java_cacerts,src=/path/to/cacerts \
+  -t spring-boot-bug-fix-lab:local .
+docker compose up -d --wait --no-build
+```
+
+For Compose builds in that environment, supply the same secrets through a local Compose override. Keep credentials, local proxy addresses, and trust stores out of version control, and keep TLS verification enabled. Standard users can continue to use `docker compose up --build` directly.
 
 ## Tests and build
 
@@ -164,7 +234,7 @@ src/test/java/com/example/bugfixlab/
 
 ## Scope and limitations
 
-The H2 database is in memory: all data is lost when the application stops. Schema creation is automatic for this development baseline. There is no authentication, frontend, Docker configuration, payment processing, inventory reservation, or order status workflow. List endpoints are unpaginated and intended for small portfolio datasets. Production persistence and deployment hardening are outside this initial version's scope.
+The H2 database is in memory: all data is lost when the application stops. Schema creation is automatic for this development baseline. There is no authentication, frontend, payment processing, inventory reservation, or order status workflow. Docker Compose provides a single-container H2 demonstration. List endpoints are unpaginated and intended for small portfolio datasets. Production persistence and deployment hardening are outside this initial version's scope.
 
 ## Portfolio Evidence
 

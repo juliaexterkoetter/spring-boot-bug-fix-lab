@@ -2,7 +2,7 @@
 
 This is the continuing evidence register for Spring Boot Bug Fix Lab. It distinguishes verified historical results, the latest recorded state, and work that has not been completed. All three documented defects are fixed and verified.
 
-Last documentation review: October 5, 2026. The latest OpenAPI step ran `mvn clean verify` with 29 passing tests and verified 11 real requests through Swagger UI. Only documentation configuration/annotations and one contract test were added; business logic is unchanged. Historical results retain their milestone context.
+Last documentation review: October 5, 2026. The latest Docker step reran local `mvn clean verify` and the same lifecycle inside the build image: 29 tests passed in each. The running container passed 13 direct HTTP checks and 11 Swagger UI requests. Application sources, tests, Maven, Swagger, and JaCoCo configuration were unchanged. Historical results retain their milestone context.
 
 When adding evidence, record the date, source commit, command or HTTP request, expected and actual result, and a link to the report or genuine screenshot. Preserve historical results instead of replacing them with later results. A planned screenshot is not evidence of execution.
 
@@ -62,7 +62,7 @@ To reproduce the intentionally broken application, its JAR was packaged with tes
 
 ## 5. Regression test evidence
 
-Current OpenAPI milestone: **29 tests, 29 passes, 0 failures, 0 errors, 0 skipped**, verified by `mvn clean verify`. The prior coverage milestone had 28 passing tests. The final missing-order fix milestone had **26 tests, 26 passes, 0 failures, 0 errors, 0 skipped**. All three original regression scenarios, stock boundary tests, and the previously blocked GET-after-delete check pass. Both `mvn test` and `mvn package` report BUILD SUCCESS. See the latest section of the [regression report](../regression-tests.md).
+Current Docker milestone: **29 tests, 29 passes, 0 failures, 0 errors, 0 skipped**, verified by local `mvn clean verify` and repeated inside the Docker build. The prior coverage milestone had 28 passing tests. The final missing-order fix milestone had **26 tests, 26 passes, 0 failures, 0 errors, 0 skipped**. All three original regression scenarios, stock boundary tests, and the previously blocked GET-after-delete check pass. Both `mvn test` and `mvn package` report BUILD SUCCESS. See the latest section of the [regression report](../regression-tests.md).
 
 ### Historical regression introduction
 
@@ -110,7 +110,10 @@ For each future fix, add the diagnosis, minimal code change, commit, passing reg
 
 ## 7. Final test results
 
-**Latest OpenAPI milestone:** 29 tests passed with 0 failures/errors/skips in `mvn clean verify`. The original 28 tests remain unchanged; the additional test verifies generated documentation. The packaged application loaded Swagger UI, and 11 real Try it out requests succeeded without JavaScript page errors. No screenshots were captured.
+**Latest Docker milestone:** local `mvn clean verify` passed all 29 tests and regenerated HTML/XML/CSV coverage. The multi-stage Docker build independently ran all 29 tests with BUILD SUCCESS before copying the JAR to the runtime image. No tests were skipped. Container execution passed the HTTP and Swagger checks recorded in section 10; no source/test changes were needed.
+
+
+**Historical OpenAPI milestone:** 29 tests passed with 0 failures/errors/skips in `mvn clean verify`. The original 28 tests remain unchanged; the additional test verifies generated documentation. The packaged application loaded Swagger UI, and 11 real Try it out requests succeeded without JavaScript page errors. No screenshots were captured.
 
 
 **Historical coverage milestone:** 28 tests passed with 0 failures/errors/skips in `mvn clean verify`; the executable JAR and JaCoCo report were regenerated. The original 26 tests also passed with instrumentation in both `mvn clean test` and `mvn verify` before adding the two scenarios. No production source or existing test assertion changed. See [testing evidence](../testing.md).
@@ -125,7 +128,7 @@ Sources: [final regression results](../regression-tests.md) and [final HTTP evid
 
 ## 8. Code coverage
 
-**Verified on October 5, 2026; refreshed after OpenAPI integration.** JaCoCo 0.8.13 attaches to the test JVM and generates HTML, XML, and CSV reports in the test phase. A fresh `mvn clean verify` executed 29 tests successfully and generated `target/site/jacoco/index.html`.
+**Verified on October 5, 2026; unchanged and reverified during containerization.** JaCoCo 0.8.13 attaches to the test JVM and generates HTML, XML, and CSV reports in the test phase. A fresh `mvn clean verify` executed 29 tests successfully and generated `target/site/jacoco/index.html`.
 
 | Counter | Covered / total | Coverage |
 | --- | --- | --- |
@@ -161,17 +164,65 @@ Screenshots 08 and 13–15 are planned for genuine future captures. See the [REA
 
 ## 10. Docker execution
 
-**Pending.** No Docker configuration or verified container execution exists. No container screenshot or deployment claim is available. Docker was not added in this documentation step.
+**Verified on October 5, 2026.** The repository now includes [Dockerfile](../../Dockerfile), [docker-compose.yml](../../docker-compose.yml), and [.dockerignore](../../.dockerignore). Source revision: the dedicated commit containing this entry, titled `build: containerize Spring Boot application with Docker Compose`.
 
-When implemented in a later task, record the image/build command, startup logs, mapped port, successful API request, and source commit before marking this section verified.
+### Image and runtime design
+
+- Build base: `maven:3.9.11-eclipse-temurin-21`, pinned to digest `sha256:6fdc855a6ed81d288ca7ca37ac6ff5e9308b612485c0801d70b25a858c83d237`.
+- Runtime base: `eclipse-temurin:21-jre-alpine`, pinned to digest `sha256:51ab5e3302e7141ce665ca3ea85e8b5cd648eafbc3c0c90dd79d6537684e4555`.
+- The build runs `mvn clean verify`; all 29 tests pass and JaCoCo analyzes 24 application classes. Maven and its dependency cache are absent from the final runtime stage.
+- Observed runtime: Temurin Java 21.0.12.1, UID/GID `10001:10001`, read-only root filesystem, temporary writable `/tmp`, all capabilities dropped, and `no-new-privileges` enabled.
+- H2 remains in memory. There is no additional database service or volume and no functional API change.
+- Local image: `spring-boot-bug-fix-lab:local`; observed image ID `sha256:06e13acc5c416a0b2c8ec2baea7c3e6a182f0018537c76c0b468c676c179610b`, reported size 266,082,528 bytes. These identify the actual local build, not a published registry release.
+
+### Build and startup verification
+
+Normal command:
+
+```bash
+docker compose up --build
+```
+
+The managed environment needs its configured proxy and Java CA trust for Maven downloads. Validation supplied those through optional BuildKit secret mounts using an override outside the repository, with no certificate/credential copied into the image. Equivalent Compose invocation (local daemon selectors omitted for readability):
+
+```bash
+APP_PORT=8086 docker compose \
+  -f docker-compose.yml -f /tmp/lab-docker-build-secrets.yml \
+  up --build -d --wait --wait-timeout 120
+```
+
+The `/tmp` override and settings are session-specific, not committed or required on an ordinary workstation. Standard execution uses the repository's Compose file alone. See [README setup](../../README.md#run-with-docker) for both paths.
+
+The command succeeded. `docker compose ps` reported `spring-boot-bug-fix-lab-app-1` healthy, mapping host 8086 to container 8080. Port 8086 avoided previous non-container servers; the default host port remains 8080. Logs reported Tomcat on port 8080 and successful Spring Boot startup. Docker inspection confirmed the intended runtime restrictions and absence of the temporary secret files.
+
+### Actual container HTTP results
+
+Thirteen requests through the mapped host port passed:
+
+| Scenario | Observed result |
+| --- | --- |
+| GET missing order 999999 | 404 Problem Details. |
+| Create customer and products | 201 responses with generated IDs. |
+| Stock 2, order quantity 5 | 409; follow-up order list was empty. |
+| Create two units at 10.00 | 201, total 20.00. |
+| GET existing order | 200 with the saved total. |
+| PUT quantity five, then GET | 200, total 50.00 in both responses. |
+| Repeat quantity-five update | 200, total remains 50.00. |
+| Delete and retrieve deleted order | 204 followed by 404. |
+
+Chromium also opened `http://localhost:8086/swagger-ui/index.html`, fetched `/v3/api-docs`, and displayed all 15 operations. Eleven additional requests executed through actual Try it out controls passed: customer/product creation and lists, stock 409/no persisted order, successful order creation/read/update, missing-order 404, and invalid-items 400. No JavaScript page errors or screenshots were recorded.
+
+Local JaCoCo remained unchanged: instructions 1009/1014 (99.51%), branches 16/16 (100%), lines 179/181 (98.90%), methods 104/105 (99.05%), classes 24/24 (100%). Generated host report: `target/site/jacoco/index.html`. Docker's build-stage report is not bundled with the runtime API.
+
+Stopping/removing the demo uses `docker compose down`; H2 data disappears on application shutdown. Docker evidence 11 and 16–18 is ready for later genuine capture, but no screenshots were taken.
 
 ## 11. Portfolio screenshots
 
-**Captured: 0. Pending: 15.** See the [screenshot plan](screenshot-plan.md) for filenames, required content, service relevance, and capture timing.
+**Captured: 0. Pending: 18.** See the [screenshot plan](screenshot-plan.md) for filenames, required content, service relevance, and capture timing.
 
 Earlier checks found no desktop display for terminal capture. Headless Chromium was subsequently available for Swagger interaction testing, but no screenshots were taken, as requested. No artificial terminal image, rendered log image, generated screenshot, or placeholder PNG was created.
 
-The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06 and 10 now have verified final results ready for capture, along with the corrected-total scenario 12. Scenario 07 now has a real JaCoCo report ready for later capture. Swagger evidence 08 and 13–15 is now ready for later capture. Only 11 still depends on future Docker tooling. No screenshots were captured during any fix task.
+The [screenshots directory](screenshots/) contains only `.gitkeep` so Git retains the empty directory. That file is not evidence. Scenarios 01–05 have historical results but need genuine captures; scenario 09 now has verified stock-fix evidence ready for later capture. Scenarios 06 and 10 now have verified final results ready for capture, along with the corrected-total scenario 12. Scenario 07 now has a real JaCoCo report ready for later capture. Swagger evidence 08 and 13–15 is now ready for later capture. Docker evidence 11 and 16–18 is now verified and ready for later capture; no planned screenshot depends on unimplemented tooling. No screenshots were captured during any fix task.
 
 When a real image is added, record its filename, capture date, source commit, command/request, and a factual caption here. If the baseline is rerun later, label the image as a rerun of the baseline commit, not an original historical capture.
 
@@ -187,6 +238,6 @@ Services this evidence can support:
 
 Suggested factual project description based on current evidence:
 
-> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed all three defects with minimal changes, preserved regression assertions, and verified correct stock rejection, totals, and HTTP 404 behavior. The 26-test bug-fix suite and Maven package build passed without skipped tests, and the packaged application passed real HTTP checks. The subsequent OpenAPI milestone provides interactive Swagger documentation and passes 29 tests with 98.90% measured line coverage, documented limits, and no custom coverage exclusions.
+> Built a Java 21 and Spring Boot order management API, verified a 21-test functional baseline and 24 HTTP checks, then introduced three controlled debugging scenarios. Documented their real HTTP reproduction and added independent regression tests that expose stock validation, total recalculation, and missing-resource error-handling defects. Fixed all three defects with minimal changes, preserved regression assertions, and verified correct stock rejection, totals, and HTTP 404 behavior. The 26-test bug-fix suite and Maven package build passed without skipped tests, and the packaged application passed real HTTP checks. The subsequent OpenAPI milestone provides interactive Swagger documentation and passes 29 tests with 98.90% measured line coverage, documented limits, and no custom coverage exclusions. A Java 21 multi-stage Docker image and Compose setup run the same tested API as a non-root container, with HTTP and Swagger verification.
 
-All three documented fixes and the final passing suite/build are verified. Measured coverage is now documented above. Swagger is now verified above. Claims about Docker, client outcomes, or production deployment are not yet supported. Add those only after the corresponding evidence exists.
+All three documented fixes and the final passing suite/build are verified. Measured coverage is now documented above. Swagger and Docker execution are verified above. Claims about client outcomes or production deployment are not supported by this local demonstration. Add those only after the corresponding evidence exists.

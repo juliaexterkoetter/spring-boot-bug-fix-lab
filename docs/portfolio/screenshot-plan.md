@@ -20,22 +20,27 @@ All entries below are **pending**.
 | `08-swagger-overview.png` | Actual Swagger UI with project title, base URL, and customer/product/order endpoint groups. | Shows usable API discovery and request documentation. | Spring Boot API documentation with OpenAPI/Swagger. | Ready for later capture: the Swagger UI was verified in Chromium, with 15 operations and the correct API title/version. No screenshot was taken. |
 | `09-stock-validation-error.png` | Stock 2, POST quantity 5, the corrected HTTP 409 rejection, and evidence that no order was persisted. | Provides the successful after-fix counterpart to screenshot 02. | Business validation fixes and transactional integrity. | Only after the stock bug is fixed and its regression test passes. |
 | `10-order-not-found-404.png` | GET of a confirmed nonexistent order, HTTP 404, and the actual structured error body. | Provides the corrected counterpart to screenshot 04. | REST exception handling and HTTP status corrections. | Ready for later capture: the missing-order HTTP regression passes and a real GET returned 404. No screenshot was taken during the fix. |
-| `11-docker-running.png` | Real container status, image name, port mapping, successful Spring Boot startup logs, and a successful HTTP request to the container. | Demonstrates a working containerized API rather than only a Dockerfile. | Docker packaging and containerized Spring Boot execution. | Only after Docker support is added and the container is genuinely running in a later task. |
+| `11-docker-running.png` | Real container status, image name, port mapping, successful Spring Boot startup logs, and a successful HTTP request to the container. | Demonstrates a working containerized API rather than only a Dockerfile. | Docker packaging and containerized Spring Boot execution. | Ready for later capture: Compose build and healthy container execution were verified on host port 8086 (default 8080). No screenshot was taken. |
 | `12-order-total-corrected.png` | Actual targeted regression passing; POST with two units at 10.00 totaling 20.00, PUT with five units, GET total 50.00, and repeated PUT still 50.00. | Shows the corrected calculation and absence of accumulation. | Spring Boot calculation fixes and regression verification. | The fix is now verified; capture later from the corrected version. No screenshot was captured in the fix task. |
 | `13-swagger-create-order.png` | Actual Swagger POST `/api/orders` Try it out request, customer/product IDs, quantity, HTTP 201, Location header, and returned total. | Shows a usable request example and successful order creation. | Spring Boot REST API development and OpenAPI documentation. | Ready for later capture after creating a customer and a product with sufficient stock in that session. |
 | `14-swagger-insufficient-stock-409.png` | Product stock 2 and Swagger POST order quantity 5, HTTP 409, Problem Details, and a follow-up empty order list on a fresh dataset. | Shows documented business validation through the interactive UI. | Spring Boot validation and debugging. | Ready for later capture; the real UI returned 409 during validation. |
 | `15-swagger-order-not-found-404.png` | Swagger GET `/api/orders/999999`, the entered ID, HTTP 404, and Problem Details response body. | Shows the corrected missing-resource contract through Swagger. | REST error handling and API documentation. | Ready for later capture using an ID confirmed absent; the real UI returned 404 during validation. |
+| `16-docker-compose-running.png` | Actual `docker compose ps`, service/image name, healthy status, mapped port, and source commit. | Shows the reproducible service is genuinely running. | Docker Compose setup for Java APIs. | Ready for later capture after `docker compose up --build -d --wait`; show the actual selected host port. |
+| `17-container-application-started.png` | Actual `docker compose logs app` with Spring Boot startup and Tomcat port 8080, plus runtime UID 10001 and Java 21 if space permits. | Connects container status to successful Java application startup. | Spring Boot containerization and runtime troubleshooting. | Ready for later capture from a real startup of the containerized application. |
+| `18-container-swagger-accessible.png` | Browser URL on the container's mapped host port, Swagger API title, endpoint groups, and a successful Try it out response. | Demonstrates Swagger is served by the containerized API. | Dockerized REST API delivery and OpenAPI documentation. | Ready for later capture while the container is healthy; use its mapped port rather than another local Java process. |
 
 ## Capture readiness
 
-- **Existing evidence, capture still pending:** 01–05. The baseline needs a rerun at its historical commit; the three broken HTTP scenarios and failing regression suite are available at the current development stage.
+- **Existing evidence, capture still pending:** 01–05. The baseline needs a rerun at its historical commit; the three broken HTTP scenarios and failing regression suite require their documented historical commits.
 - **All fixes verified, capture pending:** 06, 09, 10, and 12; no screenshots were taken during any fix task.
 - **Coverage verified, capture pending:** 07; the real report was regenerated after 29 passing tests. No screenshot was captured during this task.
 - **Swagger verified, capture pending:** 08 and 13–15; 11 real Try it out requests passed with no screenshots.
-- **Future tooling required:** 11 needs Docker.
+- **Docker verified, capture pending:** 11 and 16–18; the container was healthy and passed 13 direct HTTP plus 11 Swagger Try it out requests. No screenshots were taken.
 - **Captured in this documentation step:** none. No PNG files were created.
 
 ## Evidence sources
+
+- [Docker execution evidence](portfolio-evidence.md#10-docker-execution): base images, build, container restrictions, startup, mapped port, and actual HTTP/Swagger results.
 
 - [Testing and coverage](../testing.md): final clean verification has 29 passing tests and the measured JaCoCo counters for screenshot 07.
 
